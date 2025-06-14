@@ -51,7 +51,7 @@ const ProfileScreen = () => {
           <View style={styles.profileInfo}>
             <View style={styles.profileImageContainer}>
               <Image 
-                source={require('../assets/profile.png')} 
+                source={require('../assets/profile.jpg')} 
                 style={styles.profileImage}
                 defaultSource={({ uri: 'https://via.placeholder.com/80' })}
               />
@@ -170,41 +170,6 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/')}
-        >
-          <Icon name="cow" size={24} color="#757575" />
-          <Text style={styles.navText}>Animax</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/buy-animal')}
-        >
-          <Icon name="cart-outline" size={24} color="#757575" />
-          <Text style={styles.navText}>पशु खरीदें</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/sell-animal')}
-        >
-          <Icon name="tag-outline" size={24} color="#757575" />
-          <Text style={styles.navText}>पशु बेचें</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/vip')}
-        >
-          <Icon name="crown" size={24} color="#FFC107" />
-          <Text style={[styles.navText, styles.activeNavText]}>VIP बनें</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -506,32 +471,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     marginLeft: 4,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navText: {
-    fontSize: 12,
-    color: '#757575',
-    marginTop: 4,
-  },
-  activeNavText: {
-    color: '#FFC107',
-    fontWeight: 'bold',
   },
 });
 

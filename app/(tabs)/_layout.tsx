@@ -1,43 +1,63 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarStyle: {
+          backgroundColor: '#ff3b3b',
+          borderTopWidth: 0,
+          height: 60,
+          paddingBottom: 5,
+          paddingTop: 5,
+          borderLeftWidth: 2,
+          borderRightWidth: 2,
+          borderColor: '#3a3a3a',
+        },
+        tabBarActiveTintColor: '#ffcc00',
+        tabBarInactiveTintColor: 'white',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'पशुपालन मंच',
+          tabBarIcon: ({ color }) => <Icon name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="buy-animal"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'पशु खरीदें',
+          tabBarIcon: ({ color }) => <Icon name="cart-outline" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="sell-animal"
+        options={{
+          title: 'पशु बेचें',
+          tabBarIcon: ({ color }) => <Icon name="tag-outline" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="marketplace"
+        options={{
+          title: 'मार्केटप्लेस',
+          tabBarIcon: ({ color }) => <Icon name="pill" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="vip"
+        options={{
+          title: 'VIP बनें',
+          tabBarIcon: ({ color }) => <Icon name="crown" size={24} color={color} />,
         }}
       />
     </Tabs>

@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   FlatList,
   Dimensions,
@@ -16,20 +15,32 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
 const ProductDetailsScreen = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const product = JSON.parse(params.product as string);
+  let product = null;
+  try {
+    product = params.product ? JSON.parse(params.product as string) : null;
+  } catch (e) {
+    product = null;
+  }
+
+  if (!product) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Product data is missing or invalid.</Text>
+      </SafeAreaView>
+    );
+  }
+
   const [quantity, setQuantity] = useState(1);
   const [activeSlide, setActiveSlide] = useState(0);
-  
-  // Carousel for product images
   const flatListRef = useRef(null);
 
-  // Function to render star ratings
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -46,7 +57,6 @@ const ProductDetailsScreen = () => {
     return stars;
   };
 
-  // Handle image slide change
   const onSlideChange = (event) => {
     const slideIndex = Math.round(
       event.nativeEvent.contentOffset.x / (width - 40)
@@ -54,32 +64,28 @@ const ProductDetailsScreen = () => {
     setActiveSlide(slideIndex);
   };
 
-  // Function to share product
   const shareProduct = async () => {
     try {
       await Share.share({
         message: `${product.name} - ₹${product.price} - खरीदें पशुपालन मंच पर!`,
-        url: 'https://pashupalan-manch.com/product/' + product.id, // Replace with actual URL
+        url: 'https://pashupalan-manch.com/product/' + product.id,
       });
     } catch (error) {
       console.log(error.message);
     }
   };
 
-  // Increase quantity
   const increaseQuantity = () => {
     if (quantity < 10) setQuantity(quantity + 1);
   };
 
-  // Decrease quantity
   const decreaseQuantity = () => {
     if (quantity > 1) setQuantity(quantity - 1);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
-      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -93,7 +99,6 @@ const ProductDetailsScreen = () => {
           <Icon name="share-variant" size={24} color="white" />
         </TouchableOpacity>
       </View>
-
       <ScrollView style={styles.scrollView}>
         {/* Product Images Carousel */}
         <View style={styles.carouselContainer}>
@@ -117,7 +122,6 @@ const ProductDetailsScreen = () => {
               </View>
             )}
           />
-          
           {/* Image Pagination Dots */}
           {product.images.length > 1 && (
             <View style={styles.paginationContainer}>
@@ -132,7 +136,6 @@ const ProductDetailsScreen = () => {
               ))}
             </View>
           )}
-
           {/* Out of stock badge */}
           {!product.stockAvailable && (
             <View style={styles.outOfStockBadge}>
@@ -140,13 +143,11 @@ const ProductDetailsScreen = () => {
             </View>
           )}
         </View>
-
         {/* Product Details */}
         <View style={styles.productInfoContainer}>
           {/* Name and Price */}
           <Text style={styles.productName}>{product.name}</Text>
           <Text style={styles.productPrice}>₹{product.price}</Text>
-          
           {/* Ratings */}
           <View style={styles.ratingContainer}>
             <View style={styles.ratingStars}>
@@ -154,7 +155,6 @@ const ProductDetailsScreen = () => {
             </View>
             <Text style={styles.reviewCount}>{product.reviews} समीक्षाएँ</Text>
           </View>
-
           {/* Quantity Selector */}
           <View style={styles.quantityContainer}>
             <Text style={styles.quantityLabel}>मात्रा:</Text>
@@ -176,13 +176,11 @@ const ProductDetailsScreen = () => {
               </TouchableOpacity>
             </View>
           </View>
-
           {/* Description */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>विवरण</Text>
             <Text style={styles.description}>{product.description}</Text>
           </View>
-
           {/* Features */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>विशेषताएँ</Text>
@@ -195,7 +193,6 @@ const ProductDetailsScreen = () => {
               ))}
             </View>
           </View>
-
           {/* Shipping Info */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>शिपिंग</Text>
@@ -212,7 +209,6 @@ const ProductDetailsScreen = () => {
               </Text>
             </View>
           </View>
-
           {/* Return Policy */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>रिटर्न नीति</Text>
@@ -222,13 +218,11 @@ const ProductDetailsScreen = () => {
           </View>
         </View>
       </ScrollView>
-
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.wishlistButton}>
           <Icon name="heart-outline" size={24} color="#333" />
         </TouchableOpacity>
-        
         <TouchableOpacity 
           style={[
             styles.addToCartButton,
@@ -240,7 +234,6 @@ const ProductDetailsScreen = () => {
             {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
           </Text>
         </TouchableOpacity>
-        
         <TouchableOpacity 
           style={[
             styles.buyNowButton,

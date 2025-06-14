@@ -7,7 +7,6 @@ import {
   Image, 
   ScrollView, 
   TextInput,
-  SafeAreaView,
   StatusBar,
   Switch
 } from 'react-native';
@@ -16,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const AnimalSellScreen = () => {
   const router = useRouter();
@@ -51,7 +51,7 @@ const AnimalSellScreen = () => {
               <View style={styles.photoBox}>
                 <Text style={styles.photoTitle}>धन का फोटो चुनें</Text>
                 <Image 
-                  source={require('../assets/cow-udder.jpeg')} 
+                  source={require('../../assets/cow-udder.jpeg')} 
                   style={styles.photoImage}
                   defaultSource={({ uri: 'https://via.placeholder.com/100' })}
                 />
@@ -62,7 +62,7 @@ const AnimalSellScreen = () => {
               <View style={styles.photoBox}>
                 <Text style={styles.photoTitle}>साइड फोटो चुनें</Text>
                 <Image 
-                  source={require('../assets/cow-side.jpeg')} 
+                  source={require('../../assets/cow-side.jpeg')} 
                   style={styles.photoImage}
                   defaultSource={({ uri: 'https://via.placeholder.com/100' })}
                 />
@@ -295,8 +295,8 @@ const AnimalSellScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'left', 'right']}>
+      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
       
       {/* Header */}
       <View style={styles.header}>

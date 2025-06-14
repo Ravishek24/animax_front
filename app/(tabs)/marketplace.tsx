@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   TextInput,
   Dimensions,
@@ -18,7 +17,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Feather from 'react-native-vector-icons/Feather';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import NutriDietBanner from '../assets/NutriDiet (2).png';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -40,8 +39,8 @@ const POPULAR_PRODUCTS = [
     reviews: 34,
     description: 'हमारा प्रीमियम गाय का आहार उच्च गुणवत्ता वाले पोषक तत्वों से भरपूर है और आपके पशुओं के स्वास्थ्य के लिए आदर्श है। इसमें सभी आवश्यक विटामिन और खनिज शामिल हैं।',
     images: [
-      require('../assets/1.png'),
-      require('../assets/2.png'),
+      require('../../assets/1.png'),
+      require('../../assets/1.png'),
     ],
     features: [
       'उच्च प्रोटीन सामग्री',
@@ -59,7 +58,7 @@ const POPULAR_PRODUCTS = [
     reviews: 56,
     description: 'यह कैल्शियम सप्लीमेंट आपके पशुओं के लिए मजबूत हड्डियों और बेहतर दूध उत्पादन सुनिश्चित करता है। सभी आयु के पशुओं के लिए उपयुक्त।',
     images: [
-      require('../assets/3.png'),
+      require('../../assets/3.png'),
     ],
     features: [
       'उच्च अवशोषण वाला कैल्शियम',
@@ -77,9 +76,9 @@ const POPULAR_PRODUCTS = [
     reviews: 21,
     description: 'सम्पूर्ण विटामिन मिश्रण जो आपके पशु के समग्र स्वास्थ्य और प्रतिरक्षा प्रणाली को बढ़ावा देता है। सभी आवश्यक विटामिन एक ही पैकेज में।',
     images: [
-      require('../assets/4.png'),
-      require('../assets/5.png'),
-      require('../assets/6.png'),
+      require('../../assets/4.png'),
+      require('../../assets/4.png'),
+      require('../../assets/4.png'),
     ],
     features: [
       'विटामिन A, D, E, और B-कॉम्प्लेक्स',
@@ -97,8 +96,8 @@ const POPULAR_PRODUCTS = [
     reviews: 43,
     description: 'व्यापक स्पेक्ट्रम कृमिनाशक जो आंतरिक परजीवियों से लड़ता है और आपके पशु के स्वास्थ्य की रक्षा करता है। उपयोग में आसान और प्रभावी।',
     images: [
-      require('../assets/7.png'),
-      require('../assets/8.png'),
+      require('../../assets/7.png'),
+      require('../../assets/7.png'),
     ],
     features: [
       'व्यापक स्पेक्ट्रम कृमिनाशक',
@@ -119,7 +118,7 @@ const RECOMMENDED_PRODUCTS = [
     reviews: 19,
     description: 'ये मिनरल ब्लॉक्स आपके पशुओं को आवश्यक खनिजों का निरंतर स्रोत प्रदान करते हैं। मजबूत हड्डियों और समग्र स्वास्थ्य के लिए आदर्श।',
     images: [
-      require('../assets/9.png'),
+      require('../../assets/9.png'),
     ],
     features: [
       'आवश्यक खनिजों का मिश्रण',
@@ -137,8 +136,8 @@ const RECOMMENDED_PRODUCTS = [
     reviews: 27,
     description: 'सामान्य पशु बीमारियों के लिए आवश्यक टीकों का यह बेसिक टीकाकरण किट आपके पशुओं की सुरक्षा करता है। पशुचिकित्सक द्वारा अनुशंसित।',
     images: [
-      require('../assets/10.png'),
-      require('../assets/11.png'),
+      require('../../assets/10.png'),
+      require('../../assets/11.png'),
     ],
     features: [
       'आवश्यक टीकों का सेट',
@@ -156,7 +155,7 @@ const RECOMMENDED_PRODUCTS = [
     reviews: 38,
     description: 'यह सप्लीमेंट विशेष रूप से दूध उत्पादन को बढ़ाने के लिए तैयार किया गया है। सुरक्षित, प्राकृतिक सामग्री से बना और अत्यधिक प्रभावी।',
     images: [
-      require('../assets/12.png'),
+      require('../../assets/12.png'),
     ],
     features: [
       'दूध उत्पादन में 15-20% वृद्धि',
@@ -335,7 +334,7 @@ const MarketplaceScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }} edges={['top', 'left', 'right']}>
       <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
       
       {/* Header */}
@@ -393,7 +392,7 @@ const MarketplaceScreen = () => {
         {/* Offers Banner */}
         <View style={styles.offersBanner}>
           <Image 
-            source={NutriDietBanner}
+            source={require('../../assets/NutriDiet (3).png')}
             style={styles.offersBannerImage}
           />
         </View>

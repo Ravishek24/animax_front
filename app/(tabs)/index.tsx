@@ -6,7 +6,6 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  SafeAreaView, 
   StatusBar,
   Dimensions
 } from 'react-native';
@@ -15,6 +14,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import NutriDietBanner from '../../assets/Untitled (960 x 600 px) (970 x 600 px) (980 x 600 px).png';
 
 const { width } = Dimensions.get('window');
 
@@ -55,14 +56,14 @@ const HomeScreen = () => {
   }, [currentProcessSlide]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#ff0000" barStyle="light-content" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'left', 'right']}>
+      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
       
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logo}>
           <Icon name="cow" size={32} color="white" style={styles.logoIcon} />
-          <Text style={styles.logoText}>पशुपालन मंच</Text>
+          <Text style={styles.logoText}>Home</Text>
         </View>
         <TouchableOpacity 
           style={styles.userProfile}
@@ -87,20 +88,23 @@ const HomeScreen = () => {
           >
             <View style={styles.bannerSlide}>
               <Image 
-                source={{ uri: 'https://via.placeholder.com/480/200' }} 
+                source={NutriDietBanner}
                 style={styles.bannerImage}
+                resizeMode="contain"
               />
             </View>
             <View style={styles.bannerSlide}>
               <Image 
-                source={{ uri: 'https://via.placeholder.com/480/200' }} 
+                source={NutriDietBanner}
                 style={styles.bannerImage}
+                resizeMode="contain"
               />
             </View>
             <View style={styles.bannerSlide}>
               <Image 
-                source={{ uri: 'https://via.placeholder.com/480/200' }} 
+                source={NutriDietBanner}
                 style={styles.bannerImage}
+                resizeMode="contain"
               />
             </View>
           </ScrollView>
@@ -138,28 +142,28 @@ const HomeScreen = () => {
               style={styles.iconItem}
               onPress={() => router.push('/buy-animal')}
             >
-              <Icon name="paw" size={24} color="#0047AB" style={styles.iconImage} />
+              <Icon name="cow" size={24} color="#0047AB" style={styles.iconImage} />
               <Text style={styles.iconText}>गाय खरीदें</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.iconItem}
               onPress={() => router.push('/sell-animal')}
             >
-              <Icon name="tag-outline" size={24} color="#0047AB" style={styles.iconImage} />
+              <Icon name="cow" size={24} color="#0047AB" style={styles.iconImage} />
               <Text style={styles.iconText}>गाय बेचें</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.iconItem}
               onPress={() => router.push('/buy-animal')}
             >
-              <Icon name="water" size={24} color="#0047AB" style={styles.iconImage} />
+              <Icon name="cow" size={24} color="#00897B" style={styles.iconImage} />
               <Text style={styles.iconText}>भैंस खरीदें</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.iconItem}
               onPress={() => router.push('/sell-animal')}
             >
-              <FontAwesome name="rupee" size={24} color="#0047AB" style={styles.iconImage} />
+              <Icon name="cow" size={24} color="#00897B" style={styles.iconImage} />
               <Text style={styles.iconText}>भैंस बेचें</Text>
             </TouchableOpacity>
           </View>
@@ -293,53 +297,7 @@ const HomeScreen = () => {
             ))}
           </View>
         </View>
-
-        {/* Space for bottom navigation */}
-        <View style={styles.bottomSpacer} />
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={[styles.navItem, styles.activeNavItem]}
-          onPress={() => router.push('/')}
-        >
-          <Icon name="home" size={24} color="#ffcc00" />
-          <Text style={[styles.navText, styles.activeNavText]}>पशुपालन मंच</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/buy-animal')}
-        >
-          <Icon name="cart-outline" size={24} color="white" />
-          <Text style={styles.navText}>पशु खरीदें</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/sell-animal')}
-        >
-          <Icon name="tag-outline" size={24} color="white" />
-          <Text style={styles.navText}>पशु बेचें</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/marketplace')}
-        >
-          <Icon name="pill" size={24} color="white" />
-          <Text style={styles.navText}>मार्केटप्लेस</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/vip')}
-        >
-          <Icon name="crown" size={24} color="white" />
-          <Text style={styles.navText}>VIP बनें</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -428,11 +386,12 @@ const styles = StyleSheet.create({
   bannerSlide: {
     width: width - 32, // Full width minus horizontal margins
     height: 200,
+    backgroundColor: 'white', // Keep background for rounded corners
   },
   bannerImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    resizeMode: 'contain', // Show full image, no side cutoff
   },
   bannerControls: {
     position: 'absolute',
@@ -705,43 +664,6 @@ const styles = StyleSheet.create({
     width: 20,
     borderRadius: 10,
   },
-  
-  // Bottom Spacer
-  bottomSpacer: {
-    height: 70, // Space for bottom navigation
-  },
-  
-  // Bottom Navigation
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#ff3b3b',
-    paddingVertical: 10,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderColor: '#3a3a3a',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  navText: {
-    color: 'white',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  activeNavText: {
-    color: '#ffcc00',
-    fontWeight: 'bold',
-  }
 });
 
 export default HomeScreen;
