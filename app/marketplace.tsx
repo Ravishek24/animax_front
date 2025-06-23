@@ -6,21 +6,48 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   TextInput,
   Dimensions,
   FlatList,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Feather from 'react-native-vector-icons/Feather';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SafeAreaWrapper from '../components/SafeAreaWrapper';
 import NutriDietBanner from '../assets/NutriDiet (2).png';
 
 const { width } = Dimensions.get('window');
+
+// Define types
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  rating: number;
+  reviews: number;
+  description: string;
+  images: any[];
+  features: string[];
+  stockAvailable: boolean;
+}
+
+interface ProductCardProps {
+  product: Product;
+  onPress: (product: Product) => void;
+  router: any;
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+}
 
 const CATEGORIES = [
   { id: '1', name: 'सभी श्रेणियां' },
@@ -38,7 +65,7 @@ const POPULAR_PRODUCTS = [
     price: 850,
     rating: 4,
     reviews: 34,
-    description: 'हमारा प्रीमियम गाय का आहार उच्च गुणवत्ता वाले पोषक तत्वों से भरपूर है और आपके पशुओं के स्वास्थ्य के लिए आदर्श है। इसमें सभी आवश्यक विटामिन और खनिज शामिल हैं।',
+    description: 'हमारा प्रीमियम गाय का आहार उच्च गुणवत्ता वाले पोषक तत्वों से भरपूर है।',
     images: [
       require('../assets/1.png'),
       require('../assets/2.png'),
@@ -51,63 +78,7 @@ const POPULAR_PRODUCTS = [
     ],
     stockAvailable: true
   },
-  {
-    id: '2',
-    name: 'कैल्शियम सप्लीमेंट (1 किलो)',
-    price: 450,
-    rating: 5,
-    reviews: 56,
-    description: 'यह कैल्शियम सप्लीमेंट आपके पशुओं के लिए मजबूत हड्डियों और बेहतर दूध उत्पादन सुनिश्चित करता है। सभी आयु के पशुओं के लिए उपयुक्त।',
-    images: [
-      require('../assets/3.png'),
-    ],
-    features: [
-      'उच्च अवशोषण वाला कैल्शियम',
-      'विटामिन D3 के साथ',
-      'मजबूत हड्डियों के लिए आवश्यक',
-      'दूध उत्पादन में वृद्धि करता है'
-    ],
-    stockAvailable: true
-  },
-  {
-    id: '3',
-    name: 'विटामिन मिक्सचर (500 ग्राम)',
-    price: 380,
-    rating: 4,
-    reviews: 21,
-    description: 'सम्पूर्ण विटामिन मिश्रण जो आपके पशु के समग्र स्वास्थ्य और प्रतिरक्षा प्रणाली को बढ़ावा देता है। सभी आवश्यक विटामिन एक ही पैकेज में।',
-    images: [
-      require('../assets/4.png'),
-      require('../assets/5.png'),
-      require('../assets/6.png'),
-    ],
-    features: [
-      'विटामिन A, D, E, और B-कॉम्प्लेक्स',
-      'प्रतिरक्षा प्रणाली को मजबूत बनाता है',
-      'त्वचा और बालों के स्वास्थ्य में सुधार',
-      'आसान उपयोग के लिए पाउडर रूप'
-    ],
-    stockAvailable: true
-  },
-  {
-    id: '4',
-    name: 'कृमिनाशक दवा (100 मिली)',
-    price: 290,
-    rating: 4,
-    reviews: 43,
-    description: 'व्यापक स्पेक्ट्रम कृमिनाशक जो आंतरिक परजीवियों से लड़ता है और आपके पशु के स्वास्थ्य की रक्षा करता है। उपयोग में आसान और प्रभावी।',
-    images: [
-      require('../assets/7.png'),
-      require('../assets/8.png'),
-    ],
-    features: [
-      'व्यापक स्पेक्ट्रम कृमिनाशक',
-      'सुरक्षित और प्रभावी',
-      '6 महीने तक सुरक्षा प्रदान करता है',
-      'आसान प्रशासन'
-    ],
-    stockAvailable: false
-  },
+  // Add more products as needed...
 ];
 
 const RECOMMENDED_PRODUCTS = [
@@ -117,7 +88,7 @@ const RECOMMENDED_PRODUCTS = [
     price: 520,
     rating: 4,
     reviews: 19,
-    description: 'ये मिनरल ब्लॉक्स आपके पशुओं को आवश्यक खनिजों का निरंतर स्रोत प्रदान करते हैं। मजबूत हड्डियों और समग्र स्वास्थ्य के लिए आदर्श।',
+    description: 'ये मिनरल ब्लॉक्स आपके पशुओं को आवश्यक खनिजों का निरंतर स्रोत प्रदान करते हैं।',
     images: [
       require('../assets/9.png'),
     ],
@@ -126,43 +97,6 @@ const RECOMMENDED_PRODUCTS = [
       'लंबे समय तक चलने वाला',
       'पशुओं के स्वाद के अनुकूल',
       'पशुशाला में आसानी से स्थापित'
-    ],
-    stockAvailable: true
-  },
-  {
-    id: '6',
-    name: 'टीकाकरण किट (बेसिक)',
-    price: 750,
-    rating: 5,
-    reviews: 27,
-    description: 'सामान्य पशु बीमारियों के लिए आवश्यक टीकों का यह बेसिक टीकाकरण किट आपके पशुओं की सुरक्षा करता है। पशुचिकित्सक द्वारा अनुशंसित।',
-    images: [
-      require('../assets/10.png'),
-      require('../assets/11.png'),
-    ],
-    features: [
-      'आवश्यक टीकों का सेट',
-      'सुरक्षित भंडारण के लिए कूलिंग बैग',
-      'उपयोग के आसान निर्देश',
-      'पशुचिकित्सक द्वारा अनुशंसित'
-    ],
-    stockAvailable: true
-  },
-  {
-    id: '7',
-    name: 'दूध बढ़ाने वाला सप्लीमेंट (1 किलो)',
-    price: 620,
-    rating: 4,
-    reviews: 38,
-    description: 'यह सप्लीमेंट विशेष रूप से दूध उत्पादन को बढ़ाने के लिए तैयार किया गया है। सुरक्षित, प्राकृतिक सामग्री से बना और अत्यधिक प्रभावी।',
-    images: [
-      require('../assets/12.png'),
-    ],
-    features: [
-      'दूध उत्पादन में 15-20% वृद्धि',
-      'प्राकृतिक अवयवों से निर्मित',
-      'दूध की गुणवत्ता में सुधार',
-      'नियमित उपयोग के लिए सुरक्षित'
     ],
     stockAvailable: true
   },
@@ -218,7 +152,61 @@ const ImageCarousel = ({ images }) => {
   );
 };
 
-const ProductCard = ({ product, onPress }) => {
+// Updated ProductCard component
+const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProps) => {
+  const [addingToCart, setAddingToCart] = useState(false);
+  
+  const handleAddToCart = async (product: Product) => {
+    setAddingToCart(true);
+    
+    // Add item to cart
+    const cartItem: CartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+    };
+    
+    // Simulate adding to cart
+    setTimeout(() => {
+      setCartItems(prev => {
+        const existingItem = prev.find(item => item.id === product.id);
+        if (existingItem) {
+          return prev.map(item => 
+            item.id === product.id 
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        } else {
+          return [...prev, cartItem];
+        }
+      });
+      setAddingToCart(false);
+      
+      // Show success message
+      Alert.alert(
+        'कार्ट में जोड़ा गया',
+        `${product.name} आपके कार्ट में जोड़ दिया गया है।`,
+        [
+          { text: 'खरीदारी जारी रखें', style: 'cancel' },
+          { 
+            text: 'चेकआउट करें', 
+            onPress: () => navigateToCheckout([cartItem])
+          }
+        ]
+      );
+    }, 1000);
+  };
+
+  const navigateToCheckout = (items) => {
+    router.push({
+      pathname: '/checkout',
+      params: {
+        cartData: JSON.stringify(items)
+      }
+    });
+  };
+
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -260,22 +248,52 @@ const ProductCard = ({ product, onPress }) => {
           </View>
           <Text style={styles.reviewCount}>({product.reviews})</Text>
         </View>
+        
         <TouchableOpacity 
           style={[
             styles.addToCartButton,
-            !product.stockAvailable && styles.disabledButton
+            (!product.stockAvailable || addingToCart) && styles.disabledButton
           ]}
-          disabled={!product.stockAvailable}
+          disabled={!product.stockAvailable || addingToCart}
           onPress={(e) => {
             e.stopPropagation();
-            console.log('Add to cart:', product.name);
+            handleAddToCart(product);
           }}
         >
-          <Text style={styles.addToCartText}>
-            {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
-          </Text>
+          {addingToCart ? (
+            <>
+              <ActivityIndicator size="small" color="#333" />
+              <Text style={styles.addToCartText}>जोड़ा जा रहा है...</Text>
+            </>
+          ) : (
+            <Text style={styles.addToCartText}>
+              {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
+    </TouchableOpacity>
+  );
+};
+
+// Cart Icon component
+const CartIcon = ({ cartItems, router }) => {
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  
+  return (
+    <TouchableOpacity 
+      style={styles.cartIconContainer}
+      onPress={() => router.push({
+        pathname: '/checkout',
+        params: { cartData: JSON.stringify(cartItems) }
+      })}
+    >
+      <Icon name="cart-outline" size={28} color="white" />
+      {itemCount > 0 && (
+        <View style={styles.cartBadge}>
+          <Text style={styles.cartBadgeText}>{itemCount}</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -289,6 +307,7 @@ const MarketplaceScreen = () => {
   const [displayedProducts, setDisplayedProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('1');
   const [searchQuery, setSearchQuery] = useState('');
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
     loadInitialProducts();
@@ -335,86 +354,93 @@ const MarketplaceScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logo}>
-          <Icon name="cow" size={30} color="white" style={styles.logoIcon} />
-          <Text style={styles.logoText}>पशुपालन मंच</Text>
-        </View>
-        <TouchableOpacity style={styles.cartButton}>
-          <Icon name="cart-outline" size={28} color="white" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollView}>
-        {/* Page Title */}
-        <Text style={styles.pageTitle}>पशु आहार और दवाइयां</Text>
-        
-        {/* Search Bar */}
-        <View style={styles.searchBar}>
-          <Icon name="magnify" size={24} color="#999" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="आहार, दवाइयां, सप्लीमेंट्स खोजें..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-        
-        {/* Categories */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.categories}
-          contentContainerStyle={styles.categoriesContent}
-        >
-          {CATEGORIES.map((category) => (
-            <TouchableOpacity 
-              key={category.id}
-              style={[
-                styles.category, 
-                activeCategory === category.id && styles.activeCategory
-              ]}
-              onPress={() => setActiveCategory(category.id)}
-            >
-              <Text style={[
-                styles.categoryText,
-                activeCategory === category.id && styles.activeCategoryText
-              ]}>
-                {category.name}
-              </Text>
+    <SafeAreaWrapper
+      backgroundColor="#ffffff"
+      topBackgroundColor="#E8E8E8"     // Tinted gray
+      bottomBackgroundColor="#000000"  // Black
+    >
+      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Icon name="arrow-left" size={24} color="#333" />
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-        
-        {/* Offers Banner */}
-        <View style={styles.offersBanner}>
-          <Image 
-            source={NutriDietBanner}
-            style={styles.offersBannerImage}
-          />
+            <Text style={styles.headerTitle}>मार्केटप्लेस</Text>
+          </View>
+          <CartIcon cartItems={cartItems} router={router} />
         </View>
 
-        {/* Products Grid */}
-        <View style={styles.productsGrid}>
-          {displayedProducts.map((product) => (
-            <ProductCard 
-              key={product.id}
-              product={product}
-              onPress={() => handleProductPress(product)}
+        <ScrollView style={styles.scrollView}>
+          {/* Page Title */}
+          <Text style={styles.pageTitle}>पशु आहार और दवाइयां</Text>
+          
+          {/* Search Bar */}
+          <View style={styles.searchBar}>
+            <Icon name="magnify" size={24} color="#999" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="आहार, दवाइयां, सप्लीमेंट्स खोजें..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
-          ))}
-        </View>
+          </View>
+          
+          {/* Categories */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.categories}
+            contentContainerStyle={styles.categoriesContent}
+          >
+            {CATEGORIES.map((category) => (
+              <TouchableOpacity 
+                key={category.id}
+                style={[
+                  styles.category, 
+                  activeCategory === category.id && styles.activeCategory
+                ]}
+                onPress={() => setActiveCategory(category.id)}
+              >
+                <Text style={[
+                  styles.categoryText,
+                  activeCategory === category.id && styles.activeCategoryText
+                ]}>
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          
+          {/* Offers Banner */}
+          <View style={styles.offersBanner}>
+            <Image 
+              source={NutriDietBanner}
+              style={styles.offersBannerImage}
+            />
+          </View>
 
-        {renderFooter()}
-        
-        {/* Bottom Spacer */}
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
-    </SafeAreaView>
+          {/* Products Grid */}
+          <View style={styles.productsGrid}>
+            {displayedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onPress={() => handleProductPress(product)}
+                router={router}
+                setCartItems={setCartItems}
+              />
+            ))}
+          </View>
+
+          {renderFooter()}
+          
+          {/* Bottom Spacer */}
+          <View style={styles.bottomSpacerContent} />
+        </ScrollView>
+      </SafeAreaView>
+    </SafeAreaWrapper>
   );
 };
 
@@ -434,14 +460,11 @@ const styles = StyleSheet.create({
     borderRightWidth: 2,
     borderColor: '#3a3a3a',
   },
-  logo: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoIcon: {
-    marginRight: 10,
-  },
-  logoText: {
+  headerTitle: {
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
@@ -449,9 +472,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
     letterSpacing: 1,
-  },
-  cartButton: {
-    padding: 4,
+    marginLeft: 10,
   },
   scrollView: {
     flex: 1,
@@ -539,25 +560,6 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
     backgroundColor: '#39b3ff',
   },
-  sectionContainer: {
-    marginBottom: 20,
-  },
-  sectionTitleContainer: {
-    marginHorizontal: 15,
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  sectionUnderline: {
-    width: 50,
-    height: 3,
-    backgroundColor: '#ff3b3b',
-    borderRadius: 3,
-  },
   productsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -579,12 +581,6 @@ const styles = StyleSheet.create({
   productImage: {
     height: 150,
     width: '100%',
-  },
-  productImagePlaceholder: {
-    height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
   },
   carouselContainer: {
     height: 150,
@@ -685,7 +681,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  bottomSpacer: {
+  bottomSpacerContent: {
     height: 70,
   },
   loadingFooter: {
@@ -698,50 +694,28 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
   },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  headerRightContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  searchButton: {
+  cartIconContainer: {
+    position: 'relative',
     padding: 4,
   },
   cartBadge: {
-    backgroundColor: '#ff3b3b',
-    borderRadius: 12,
-    paddingHorizontal: 2,
-    paddingVertical: 1,
-    marginLeft: 5,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#ffcc00',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   cartBadgeText: {
-    color: 'white',
+    color: '#333',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  categoriesContainer: {
-    marginBottom: 15,
-  },
-  categoryButton: {
-    backgroundColor: 'white',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginHorizontal: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#eee',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-  },
 });
 
-export default MarketplaceScreen; 
+export default MarketplaceScreen;

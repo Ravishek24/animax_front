@@ -7,20 +7,21 @@ import {
   ScrollView, 
   TouchableOpacity, 
   StatusBar,
-  Dimensions
+  Dimensions,
+  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SafeAreaWrapper from '../../components/SafeAreaWrapper';
 import NutriDietBanner from '../../assets/Untitled (960 x 600 px) (970 x 600 px) (980 x 600 px).png';
 
 const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [currentBannerSlide, setCurrentBannerSlide] = React.useState(0);
   const [currentProcessSlide, setCurrentProcessSlide] = React.useState(0);
   
@@ -42,10 +43,8 @@ const HomeScreen = () => {
     return () => clearInterval(processInterval);
   }, []);
 
-  // Reference to the process steps scroll view
   const processScrollViewRef = React.useRef(null);
   
-  // Update process scroll position when currentProcessSlide changes
   React.useEffect(() => {
     if (processScrollViewRef.current) {
       processScrollViewRef.current.scrollTo({
@@ -56,8 +55,12 @@ const HomeScreen = () => {
   }, [currentProcessSlide]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'left', 'right']}>
-      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
+    <SafeAreaWrapper
+      backgroundColor="#ffffff"
+      topBackgroundColor="#E8E8E8"  // Tinted gray
+      bottomBackgroundColor="#000000"  // Black
+    >
+      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -298,15 +301,16 @@ const HomeScreen = () => {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      
+      {/* Tab bar spacer */}
+      <View style={[styles.tabBarSpacer, { 
+        height: Platform.OS === 'ios' ? insets.bottom + 85 : 70 
+      }]} />
+    </SafeAreaWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
   // Header
   header: {
     flexDirection: 'row',
@@ -384,14 +388,14 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   bannerSlide: {
-    width: width - 32, // Full width minus horizontal margins
+    width: width - 32,
     height: 200,
-    backgroundColor: 'white', // Keep background for rounded corners
+    backgroundColor: 'white',
   },
   bannerImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'contain', // Show full image, no side cutoff
+    resizeMode: 'contain',
   },
   bannerControls: {
     position: 'absolute',
@@ -663,6 +667,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff3b3b',
     width: 20,
     borderRadius: 10,
+  },
+  
+  // Tab bar spacer
+  tabBarSpacer: {
+    backgroundColor: 'transparent',
   },
 });
 

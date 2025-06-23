@@ -6,46 +6,48 @@ import {
   TouchableOpacity, 
   Image, 
   ScrollView, 
-  SafeAreaView,
   StatusBar
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import SafeAreaWrapper from '../components/SafeAreaWrapper';
 
 const ProfileScreen = () => {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Icon name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-        
-        <Text style={styles.headerTitle}>प्रोफाइल</Text>
-        
-        <View style={styles.headerRightContainer}>
-          <TouchableOpacity style={styles.languageButton}>
-            <Text style={styles.languageText}>En | हि</Text>
-            <Icon name="chevron-down" size={18} color="#fff" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.moreButton}>
-            <Icon name="dots-vertical" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-      </View>
+    <SafeAreaWrapper
+      backgroundColor="#ffffff"
+      topBackgroundColor="#E8E8E8"     // Tinted gray
+      bottomBackgroundColor="#000000"  // Black
+    >
+      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       
       <ScrollView style={styles.scrollView}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Icon name="arrow-left" size={24} color="#000" />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle}>प्रोफाइल</Text>
+          
+          <View style={styles.headerRightContainer}>
+            <TouchableOpacity style={styles.languageButton}>
+              <Text style={styles.languageText}>En | हि</Text>
+              <Icon name="chevron-down" size={18} color="#fff" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.moreButton}>
+              <Icon name="dots-vertical" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
         {/* Profile Info Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileInfo}>
@@ -170,7 +172,7 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaWrapper>
   );
 };
 
@@ -474,4 +476,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen; 
+export default ProfileScreen;

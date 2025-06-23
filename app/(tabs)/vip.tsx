@@ -1,16 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, StatusBar, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import SafeAreaWrapper from '../../components/SafeAreaWrapper';
 
 const VipScreen = () => {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
-      <View style={styles.centered}>
-        <Text style={styles.title}>VIP बनें</Text>
-        <Text style={styles.subtitle}>यहाँ VIP फीचर्स आएंगे।</Text>
-      </View>
-    </SafeAreaView>
+    <SafeAreaWrapper
+      backgroundColor="#ffffff"
+      topBackgroundColor="#E8E8E8"     // Tinted gray
+      bottomBackgroundColor="#000000"  // Black
+    >
+      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
+      
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <View style={styles.centered}>
+          <Text style={styles.title}>VIP बनें</Text>
+          <Text style={styles.subtitle}>यहाँ VIP फीचर्स आएंगे।</Text>
+        </View>
+        
+        {/* Bottom spacer for tab bar */}
+        <View style={[styles.bottomSpacer, { 
+          height: Platform.OS === 'ios' ? insets.bottom + 85 : 70 
+        }]} />
+      </SafeAreaView>
+    </SafeAreaWrapper>
   );
 };
 
@@ -34,6 +49,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  bottomSpacer: {
+    backgroundColor: 'transparent',
+  },
 });
 
-export default VipScreen; 
+export default VipScreen;

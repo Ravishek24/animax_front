@@ -14,7 +14,6 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -31,9 +30,15 @@ const ProductDetailsScreen = () => {
 
   if (!product) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Product data is missing or invalid.</Text>
-      </SafeAreaView>
+      <>
+        <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" translucent={false} />
+        
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text>Product data is missing or invalid.</Text>
+          </View>
+        </SafeAreaView>
+      </>
     );
   }
 
@@ -84,167 +89,179 @@ const ProductDetailsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Icon name="arrow-left" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>उत्पाद विवरण</Text>
-        <TouchableOpacity style={styles.shareButton} onPress={shareProduct}>
-          <Icon name="share-variant" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
-      <ScrollView style={styles.scrollView}>
-        {/* Product Images Carousel */}
-        <View style={styles.carouselContainer}>
-          <FlatList
-            ref={flatListRef}
-            data={product.images}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={onSlideChange}
-            keyExtractor={(_, index) => `image_${index}`}
-            renderItem={({ item }) => (
-              <View style={styles.slideItem}>
-                <View style={styles.imageContainer}>
-                  <Image 
-                    source={item} 
-                    style={styles.productImage}
-                    resizeMode="cover"
-                  />
+    <>
+      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" translucent={false} />
+      
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Icon name="arrow-left" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>उत्पाद विवरण</Text>
+          <TouchableOpacity style={styles.shareButton} onPress={shareProduct}>
+            <Icon name="share-variant" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+        
+        <ScrollView style={styles.scrollView}>
+          {/* Product Images Carousel */}
+          <View style={styles.carouselContainer}>
+            <FlatList
+              ref={flatListRef}
+              data={product.images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={onSlideChange}
+              keyExtractor={(_, index) => `image_${index}`}
+              renderItem={({ item }) => (
+                <View style={styles.slideItem}>
+                  <View style={styles.imageContainer}>
+                    <Image 
+                      source={item} 
+                      style={styles.productImage}
+                      resizeMode="cover"
+                    />
+                  </View>
                 </View>
+              )}
+            />
+            {/* Image Pagination Dots */}
+            {product.images.length > 1 && (
+              <View style={styles.paginationContainer}>
+                {product.images.map((_, index) => (
+                  <View
+                    key={`dot_${index}`}
+                    style={[
+                      styles.paginationDot,
+                      activeSlide === index ? styles.paginationDotActive : {}
+                    ]}
+                  />
+                ))}
               </View>
             )}
-          />
-          {/* Image Pagination Dots */}
-          {product.images.length > 1 && (
-            <View style={styles.paginationContainer}>
-              {product.images.map((_, index) => (
-                <View
-                  key={`dot_${index}`}
-                  style={[
-                    styles.paginationDot,
-                    activeSlide === index ? styles.paginationDotActive : {}
-                  ]}
-                />
-              ))}
-            </View>
-          )}
-          {/* Out of stock badge */}
-          {!product.stockAvailable && (
-            <View style={styles.outOfStockBadge}>
-              <Text style={styles.outOfStockText}>स्टॉक में नहीं</Text>
-            </View>
-          )}
-        </View>
-        {/* Product Details */}
-        <View style={styles.productInfoContainer}>
-          {/* Name and Price */}
-          <Text style={styles.productName}>{product.name}</Text>
-          <Text style={styles.productPrice}>₹{product.price}</Text>
-          {/* Ratings */}
-          <View style={styles.ratingContainer}>
-            <View style={styles.ratingStars}>
-              {renderStars(product.rating)}
-            </View>
-            <Text style={styles.reviewCount}>{product.reviews} समीक्षाएँ</Text>
+            {/* Out of stock badge */}
+            {!product.stockAvailable && (
+              <View style={styles.outOfStockBadge}>
+                <Text style={styles.outOfStockText}>स्टॉक में नहीं</Text>
+              </View>
+            )}
           </View>
-          {/* Quantity Selector */}
-          <View style={styles.quantityContainer}>
-            <Text style={styles.quantityLabel}>मात्रा:</Text>
-            <View style={styles.quantitySelector}>
-              <TouchableOpacity 
-                style={styles.quantityButton}
-                onPress={decreaseQuantity}
-                disabled={quantity <= 1}
-              >
-                <Icon name="minus" size={16} color="#333" />
-              </TouchableOpacity>
-              <Text style={styles.quantityText}>{quantity}</Text>
-              <TouchableOpacity 
-                style={styles.quantityButton}
-                onPress={increaseQuantity}
-                disabled={quantity >= 10}
-              >
-                <Icon name="plus" size={16} color="#333" />
-              </TouchableOpacity>
+          
+          {/* Product Details */}
+          <View style={styles.productInfoContainer}>
+            {/* Name and Price */}
+            <Text style={styles.productName}>{product.name}</Text>
+            <Text style={styles.productPrice}>₹{product.price}</Text>
+            
+            {/* Ratings */}
+            <View style={styles.ratingContainer}>
+              <View style={styles.ratingStars}>
+                {renderStars(product.rating)}
+              </View>
+              <Text style={styles.reviewCount}>{product.reviews} समीक्षाएँ</Text>
             </View>
-          </View>
-          {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>विवरण</Text>
-            <Text style={styles.description}>{product.description}</Text>
-          </View>
-          {/* Features */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>विशेषताएँ</Text>
-            <View style={styles.featuresList}>
-              {product.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <Icon name="check-circle" size={16} color="#ff3b3b" style={styles.featureIcon} />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
+            
+            {/* Quantity Selector */}
+            <View style={styles.quantityContainer}>
+              <Text style={styles.quantityLabel}>मात्रा:</Text>
+              <View style={styles.quantitySelector}>
+                <TouchableOpacity 
+                  style={styles.quantityButton}
+                  onPress={decreaseQuantity}
+                  disabled={quantity <= 1}
+                >
+                  <Icon name="minus" size={16} color="#333" />
+                </TouchableOpacity>
+                <Text style={styles.quantityText}>{quantity}</Text>
+                <TouchableOpacity 
+                  style={styles.quantityButton}
+                  onPress={increaseQuantity}
+                  disabled={quantity >= 10}
+                >
+                  <Icon name="plus" size={16} color="#333" />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-          {/* Shipping Info */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>शिपिंग</Text>
-            <View style={styles.shippingInfo}>
-              <Icon name="truck-delivery" size={18} color="#333" style={styles.shippingIcon} />
-              <Text style={styles.shippingText}>
-                3-5 दिनों में डिलीवरी
+            
+            {/* Description */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>विवरण</Text>
+              <Text style={styles.description}>{product.description}</Text>
+            </View>
+            
+            {/* Features */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>विशेषताएँ</Text>
+              <View style={styles.featuresList}>
+                {product.features.map((feature, index) => (
+                  <View key={index} style={styles.featureItem}>
+                    <Icon name="check-circle" size={16} color="#ff3b3b" style={styles.featureIcon} />
+                    <Text style={styles.featureText}>{feature}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+            
+            {/* Shipping Info */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>शिपिंग</Text>
+              <View style={styles.shippingInfo}>
+                <Icon name="truck-delivery" size={18} color="#333" style={styles.shippingIcon} />
+                <Text style={styles.shippingText}>
+                  3-5 दिनों में डिलीवरी
+                </Text>
+              </View>
+              <View style={styles.shippingInfo}>
+                <Icon name="currency-inr" size={18} color="#333" style={styles.shippingIcon} />
+                <Text style={styles.shippingText}>
+                  ₹500 से अधिक की खरीद पर मुफ्त शिपिंग
+                </Text>
+              </View>
+            </View>
+            
+            {/* Return Policy */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>रिटर्न नीति</Text>
+              <Text style={styles.returnText}>
+                डिलीवरी के 7 दिनों के भीतर आसान रिटर्न और पूरा रिफंड।
               </Text>
             </View>
-            <View style={styles.shippingInfo}>
-              <Icon name="currency-inr" size={18} color="#333" style={styles.shippingIcon} />
-              <Text style={styles.shippingText}>
-                ₹500 से अधिक की खरीद पर मुफ्त शिपिंग
-              </Text>
-            </View>
           </View>
-          {/* Return Policy */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>रिटर्न नीति</Text>
-            <Text style={styles.returnText}>
-              डिलीवरी के 7 दिनों के भीतर आसान रिटर्न और पूरा रिफंड।
+        </ScrollView>
+        
+        {/* Bottom Action Bar */}
+        <View style={styles.bottomBar}>
+          <TouchableOpacity style={styles.wishlistButton}>
+            <Icon name="heart-outline" size={24} color="#333" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[
+              styles.addToCartButton,
+              !product.stockAvailable && styles.disabledButton
+            ]}
+            disabled={!product.stockAvailable}
+          >
+            <Text style={styles.addToCartText}>
+              {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
             </Text>
-          </View>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[
+              styles.buyNowButton,
+              !product.stockAvailable && styles.disabledButton
+            ]}
+            disabled={!product.stockAvailable}
+          >
+            <Text style={styles.buyNowText}>अभी खरीदें</Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-      {/* Bottom Action Bar */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.wishlistButton}>
-          <Icon name="heart-outline" size={24} color="#333" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[
-            styles.addToCartButton,
-            !product.stockAvailable && styles.disabledButton
-          ]}
-          disabled={!product.stockAvailable}
-        >
-          <Text style={styles.addToCartText}>
-            {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[
-            styles.buyNowButton,
-            !product.stockAvailable && styles.disabledButton
-          ]}
-          disabled={!product.stockAvailable}
-        >
-          <Text style={styles.buyNowText}>अभी खरीदें</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -494,4 +511,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProductDetailsScreen; 
+export default ProductDetailsScreen;

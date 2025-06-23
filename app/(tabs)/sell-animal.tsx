@@ -8,17 +8,16 @@ import {
   ScrollView, 
   TextInput,
   StatusBar,
-  Switch
+  Switch,
+  Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Feather from 'react-native-vector-icons/Feather';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const AnimalSellScreen = () => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   // State for form inputs and selections
   const [selectedTab, setSelectedTab] = useState('upload'); // 'upload', 'form', 'price'
   const [animalType, setAnimalType] = useState('');
@@ -295,33 +294,40 @@ const AnimalSellScreen = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'left', 'right']}>
-      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" />
+    <>
+      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" translucent={false} />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Icon name="cow" size={24} color="#D32F2F" />
-          <Text style={styles.headerTitle}>पशुपालन मंच</Text>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Icon name="cow" size={24} color="#D32F2F" />
+            <Text style={styles.headerTitle}>पशुपालन मंच</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet')}>
+              <Icon name="circle" size={14} color="#FFC107" />
+              <Icon name="wallet" size={24} color="#D32F2F" />
+              <Text style={styles.headerButtonText}>वॉलेट</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
+              <Icon name="account" size={24} color="#D32F2F" />
+              <Text style={styles.headerButtonText}>प्रोफाइल</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet')}>
-            <Icon name="circle" size={14} color="#FFC107" />
-            <Icon name="wallet" size={24} color="#D32F2F" />
-            <Text style={styles.headerButtonText}>वॉलेट</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
-            <Icon name="account" size={24} color="#D32F2F" />
-            <Text style={styles.headerButtonText}>प्रोफाइल</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      
-      {/* Main content based on selected tab */}
-      {selectedTab === 'upload' && renderUploadScreen()}
-      {selectedTab === 'form' && renderFormScreen()}
-      {selectedTab === 'price' && renderPriceScreen()}
-    </SafeAreaView>
+        
+        {/* Main content based on selected tab */}
+        {selectedTab === 'upload' && renderUploadScreen()}
+        {selectedTab === 'form' && renderFormScreen()}
+        {selectedTab === 'price' && renderPriceScreen()}
+        
+        {/* Bottom spacer for tab bar */}
+        <View style={[styles.bottomSpacer, { 
+          height: Platform.OS === 'ios' ? insets.bottom + 85 : 70 
+        }]} />
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -349,11 +355,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
-  },
-  headerSubtitle: {
-    color: '#757575',
-    fontSize: 12,
-    marginLeft: 4,
   },
   headerRight: {
     flexDirection: 'row',
@@ -658,8 +659,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   negotiableTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
     fontWeight: 'bold',
   },
   negotiableSubtitle: {
@@ -694,6 +693,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: 'bold',
   },
+  bottomSpacer: {
+    backgroundColor: 'transparent',
+  },
 });
 
-export default AnimalSellScreen; 
+export default AnimalSellScreen;

@@ -7,15 +7,13 @@ import {
   Image, 
   ScrollView, 
   TextInput,
-  SafeAreaView,
   StatusBar,
   Switch
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Feather from 'react-native-vector-icons/Feather';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SafeAreaWrapper from '../components/SafeAreaWrapper';
 
 const AnimalSellScreen = () => {
   const router = useRouter();
@@ -295,33 +293,42 @@ const AnimalSellScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+    <SafeAreaWrapper
+      backgroundColor="#ffffff"
+      topBackgroundColor="#E8E8E8"     // Tinted gray
+      bottomBackgroundColor="#000000"  // Black
+    >
+      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Icon name="cow" size={24} color="#D32F2F" />
-          <Text style={styles.headerTitle}>पशुपालन मंच</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet')}>
-            <Icon name="circle" size={14} color="#FFC107" />
-            <Icon name="wallet" size={24} color="#D32F2F" />
-            <Text style={styles.headerButtonText}>वॉलेट</Text>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Icon name="arrow-left" size={24} color="#D32F2F" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
-            <Icon name="account" size={24} color="#D32F2F" />
-            <Text style={styles.headerButtonText}>प्रोफाइल</Text>
-          </TouchableOpacity>
+          <View style={styles.headerLeft}>
+            <Icon name="cow" size={24} color="#D32F2F" />
+            <Text style={styles.headerTitle}>पशुपालन मंच</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet')}>
+              <Icon name="circle" size={14} color="#FFC107" />
+              <Icon name="wallet" size={24} color="#D32F2F" />
+              <Text style={styles.headerButtonText}>वॉलेट</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
+              <Icon name="account" size={24} color="#D32F2F" />
+              <Text style={styles.headerButtonText}>प्रोफाइल</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-      
-      {/* Main content based on selected tab */}
-      {selectedTab === 'upload' && renderUploadScreen()}
-      {selectedTab === 'form' && renderFormScreen()}
-      {selectedTab === 'price' && renderPriceScreen()}
-    </SafeAreaView>
+        
+        {/* Main content based on selected tab */}
+        {selectedTab === 'upload' && renderUploadScreen()}
+        {selectedTab === 'form' && renderFormScreen()}
+        {selectedTab === 'price' && renderPriceScreen()}
+      </SafeAreaView>
+    </SafeAreaWrapper>
   );
 };
 
@@ -349,11 +356,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
-  },
-  headerSubtitle: {
-    color: '#757575',
-    fontSize: 12,
-    marginLeft: 4,
   },
   headerRight: {
     flexDirection: 'row',
@@ -658,8 +660,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   negotiableTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
     fontWeight: 'bold',
   },
   negotiableSubtitle: {
@@ -696,4 +696,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AnimalSellScreen; 
+export default AnimalSellScreen;
