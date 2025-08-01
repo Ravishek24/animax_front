@@ -343,40 +343,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: '#D32F2F',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  headerRight: {
-    flexDirection: 'row',
-  },
-  walletButton: {
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  profileButton: {
-    alignItems: 'center',
-  },
-  headerButtonText: {
-    fontSize: 12,
-    color: '#757575',
-  },
   scrollView: {
     flex: 1,
   },

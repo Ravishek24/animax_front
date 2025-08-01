@@ -182,7 +182,7 @@ const BuyAnimalsScreen = () => {
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   const handleCategorySelect = (category: 'all' | 'cow' | 'buffalo' | 'other') => {
     setSelectedCategory(category);
