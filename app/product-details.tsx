@@ -15,6 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SafeAreaWrapper from '../components/SafeAreaWrapper';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,15 +31,14 @@ const ProductDetailsScreen = () => {
 
   if (!product) {
     return (
-      <>
-        <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" translucent={false} />
-        
+      <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
+        <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text>Product data is missing or invalid.</Text>
           </View>
         </SafeAreaView>
-      </>
+      </SafeAreaWrapper>
     );
   }
 
@@ -89,22 +89,17 @@ const ProductDetailsScreen = () => {
   };
 
   return (
-    <>
-      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" translucent={false} />
-      
+    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
+      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        {/* Header */}
+        {/* Header - Match Marketplace Style */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Icon name="arrow-left" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>उत्पाद विवरण</Text>
-          <TouchableOpacity style={styles.shareButton} onPress={shareProduct}>
-            <Icon name="share-variant" size={24} color="white" />
-          </TouchableOpacity>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Icon name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>उत्पाद विवरण</Text>
+          </View>
         </View>
         
         <ScrollView style={styles.scrollView}>
@@ -261,7 +256,7 @@ const ProductDetailsScreen = () => {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </>
+    </SafeAreaWrapper>
   );
 };
 
@@ -276,21 +271,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#ff3b3b',
     paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderColor: '#3a3a3a',
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  backButton: {
-    padding: 5,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerTitle: {
-    color: 'white',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  shareButton: {
-    padding: 5,
+    color: 'white',
+    marginLeft: 12,
   },
   scrollView: {
     flex: 1,

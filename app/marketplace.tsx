@@ -283,10 +283,7 @@ const CartIcon = ({ cartItems, router }) => {
   return (
     <TouchableOpacity 
       style={styles.cartIconContainer}
-      onPress={() => router.push({
-        pathname: '/checkout',
-        params: { cartData: JSON.stringify(cartItems) }
-      })}
+      onPress={() => router.push(`/cart?cartData=${encodeURIComponent(JSON.stringify(cartItems))}`)}
     >
       <Icon name="cart-outline" size={28} color="white" />
       {itemCount > 0 && (

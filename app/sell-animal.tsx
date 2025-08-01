@@ -298,7 +298,6 @@ const AnimalSellScreen = () => {
       topBackgroundColor="#E8E8E8"     // Tinted gray
       bottomBackgroundColor="#000000"  // Black
     >
-      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         {/* Header */}

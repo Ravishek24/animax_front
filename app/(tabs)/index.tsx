@@ -6,7 +6,6 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  StatusBar,
   Dimensions,
   Platform
 } from 'react-native';
@@ -15,7 +14,6 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../../components/SafeAreaWrapper';
-import NutriDietBanner from '../../assets/Untitled (960 x 600 px) (970 x 600 px) (980 x 600 px).png';
 
 const { width } = Dimensions.get('window');
 
@@ -43,7 +41,7 @@ const HomeScreen = () => {
     return () => clearInterval(processInterval);
   }, []);
 
-  const processScrollViewRef = React.useRef(null);
+  const processScrollViewRef = React.useRef<ScrollView>(null);
   
   React.useEffect(() => {
     if (processScrollViewRef.current) {
@@ -60,7 +58,6 @@ const HomeScreen = () => {
       topBackgroundColor="#E8E8E8"  // Tinted gray
       bottomBackgroundColor="#000000"  // Black
     >
-      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -91,21 +88,21 @@ const HomeScreen = () => {
           >
             <View style={styles.bannerSlide}>
               <Image 
-                source={NutriDietBanner}
+                source={require('../../assets/Untitled (960 x 600 px) (970 x 600 px) (980 x 600 px).png')}
                 style={styles.bannerImage}
                 resizeMode="contain"
               />
             </View>
             <View style={styles.bannerSlide}>
               <Image 
-                source={NutriDietBanner}
+                source={require('../../assets/Untitled (960 x 600 px) (970 x 600 px) (980 x 600 px).png')}
                 style={styles.bannerImage}
                 resizeMode="contain"
               />
             </View>
             <View style={styles.bannerSlide}>
               <Image 
-                source={NutriDietBanner}
+                source={require('../../assets/Untitled (960 x 600 px) (970 x 600 px) (980 x 600 px).png')}
                 style={styles.bannerImage}
                 resizeMode="contain"
               />

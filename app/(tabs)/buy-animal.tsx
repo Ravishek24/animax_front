@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   FlatList,
   ActivityIndicator,
   Alert,
@@ -50,6 +49,9 @@ interface Category {
   key: 'all' | 'cow' | 'buffalo' | 'other';
 }
 
+const PAGE_SIZE = 20;
+const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.sociamosaic.com'; // Update this with your domain
+
 const BuyAnimalsScreen = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -60,6 +62,8 @@ const BuyAnimalsScreen = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const categories: Category[] = [
     { id: '1', name: 'सभी', emoji: '🐄', key: 'all' },
@@ -68,8 +72,8 @@ const BuyAnimalsScreen = () => {
     { id: '4', name: 'अन्य', emoji: '🐮', key: 'other' },
   ];
 
-  // Sample data - Replace with API call
-  const sampleAnimals: Animal[] = [
+  // Mock animal data
+  const mockAnimals: Animal[] = [
     {
       id: '1',
       title: '18L दूध क्षमता | मुर्रा | ब्यावी नहीं | OL अभी का दूध',
@@ -146,37 +150,35 @@ const BuyAnimalsScreen = () => {
   ];
 
   useEffect(() => {
-    loadAnimals();
-    
-    // Animate on load
+    loadAnimals(1, selectedCategory, nearbyOnly, true);
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 500,
       useNativeDriver: true,
     }).start();
+    // eslint-disable-next-line
   }, []);
 
-  const loadAnimals = async (category?: string, nearby?: boolean) => {
+  const loadAnimals = async (
+    pageNum: number = 1,
+    category: string = selectedCategory,
+    nearby: boolean = nearbyOnly,
+    reset: boolean = false
+  ) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let filteredAnimals = sampleAnimals;
-      
-      // Filter by category
-      if (category && category !== 'all') {
-        filteredAnimals = filteredAnimals.filter(animal => animal.category === category);
+      let url = `${BACKEND_URL}/api/cows?page=${pageNum}&limit=${PAGE_SIZE}`;
+      // Add category/nearby filters if needed
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.success) {
+        const newAnimals = data.data;
+        setAnimals(reset ? newAnimals : prev => [...prev, ...newAnimals]);
+        setHasMore(newAnimals.length === PAGE_SIZE);
+        setPage(pageNum);
+      } else {
+        throw new Error(data.message || 'Failed to load animals');
       }
-      
-      // Filter by nearby (you'd implement actual location-based filtering)
-      if (nearby) {
-        filteredAnimals = filteredAnimals.filter(animal => 
-          parseInt(animal.distance) <= 50
-        );
-      }
-      
-      setAnimals(filteredAnimals);
     } catch (error) {
       console.error('Error loading animals:', error);
       Alert.alert('त्रुटि', 'पशु लोड करने में समस्या हुई है।');
@@ -185,15 +187,21 @@ const BuyAnimalsScreen = () => {
     }
   };
 
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      loadAnimals(page + 1, selectedCategory, nearbyOnly);
+    }
+  };
+
   const handleCategorySelect = (category: 'all' | 'cow' | 'buffalo' | 'other') => {
     setSelectedCategory(category);
-    loadAnimals(category, nearbyOnly);
+    loadAnimals(1, category, nearbyOnly, true);
   };
 
   const toggleNearby = () => {
     const newNearby = !nearbyOnly;
     setNearbyOnly(newNearby);
-    loadAnimals(selectedCategory, newNearby);
+    loadAnimals(1, selectedCategory, newNearby, true);
   };
 
   const handleCall = (phone: string, sellerName: string) => {
@@ -217,7 +225,7 @@ const BuyAnimalsScreen = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadAnimals(selectedCategory, nearbyOnly);
+    await loadAnimals(1, selectedCategory, nearbyOnly, true);
     setRefreshing(false);
   };
 
@@ -240,71 +248,79 @@ const BuyAnimalsScreen = () => {
   );
 
   const renderAnimal = ({ item, index }: { item: Animal, index: number }) => (
-    <Animated.View
-      style={[
-        styles.animalCard,
-        { opacity: fadeAnim }
-      ]}
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={() => router.push({
+        pathname: '/product-details',
+        params: { product: JSON.stringify(item) }
+      })}
     >
-      <View style={styles.animalHeader}>
-        <View style={styles.animalTitleContainer}>
-          <Text style={styles.animalTitle} numberOfLines={2}>{item.title}</Text>
-          {item.isPremium && (
-            <View style={styles.premiumBadge}>
-              <Icon name="crown" size={12} color="#FFD700" />
-              <Text style={styles.premiumText}>प्रीमियम</Text>
+      <Animated.View
+        style={[
+          styles.animalCard,
+          { opacity: fadeAnim }
+        ]}
+      >
+        <View style={styles.animalHeader}>
+          <View style={styles.animalTitleContainer}>
+            <Text style={styles.animalTitle} numberOfLines={2}>{item.title}</Text>
+            {item.isPremium && (
+              <View style={styles.premiumBadge}>
+                <Icon name="crown" size={12} color="#FFD700" />
+                <Text style={styles.premiumText}>प्रीमियम</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.animalPrice}>₹{item.price.toLocaleString()}</Text>
+        </View>
+
+        <View style={styles.animalDetails}>
+          <View style={styles.detailRow}>
+            <Icon name="cow" size={16} color="#666" />
+            <Text style={styles.detailText}>{item.breed}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Icon name="cup-water" size={16} color="#666" />
+            <Text style={styles.detailText}>दूध: {item.currentMilk} / {item.milkCapacity}</Text>
+          </View>
+          {item.pregnant && (
+            <View style={styles.detailRow}>
+              <Icon name="baby-face-outline" size={16} color="#666" />
+              <Text style={styles.detailText}>गर्भवती: {item.pregnancyMonths} महीने</Text>
             </View>
           )}
-        </View>
-        <Text style={styles.animalPrice}>₹{item.price.toLocaleString()}</Text>
-      </View>
-
-      <View style={styles.animalDetails}>
-        <View style={styles.detailRow}>
-          <Icon name="cow" size={16} color="#666" />
-          <Text style={styles.detailText}>{item.breed}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Icon name="cup-water" size={16} color="#666" />
-          <Text style={styles.detailText}>दूध: {item.currentMilk} / {item.milkCapacity}</Text>
-        </View>
-        {item.pregnant && (
           <View style={styles.detailRow}>
-            <Icon name="baby-face-outline" size={16} color="#666" />
-            <Text style={styles.detailText}>गर्भवती: {item.pregnancyMonths} महीने</Text>
+            <Icon name="calendar" size={16} color="#666" />
+            <Text style={styles.detailText}>आयु: {item.age}</Text>
           </View>
-        )}
-        <View style={styles.detailRow}>
-          <Icon name="calendar" size={16} color="#666" />
-          <Text style={styles.detailText}>आयु: {item.age}</Text>
+          <View style={styles.detailRow}>
+            <Icon name="map-marker" size={16} color="#666" />
+            <Text style={styles.detailText}>{item.location} ({item.distance})</Text>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <Icon name="map-marker" size={16} color="#666" />
-          <Text style={styles.detailText}>{item.location} ({item.distance})</Text>
-        </View>
-      </View>
 
-      <View style={styles.sellerInfo}>
-        <View style={styles.sellerDetails}>
-          <Text style={styles.sellerName}>{item.sellerName}</Text>
-          <Text style={styles.postedTime}>{item.postedTime}</Text>
+        <View style={styles.sellerInfo}>
+          <View style={styles.sellerDetails}>
+            <Text style={styles.sellerName}>{item.sellerName}</Text>
+            <Text style={styles.postedTime}>{item.postedTime}</Text>
+          </View>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.callButton}
+              onPress={() => handleCall(item.sellerPhone, item.sellerName)}
+            >
+              <Icon name="phone" size={20} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.whatsappButton}
+              onPress={() => handleWhatsApp(item.sellerPhone, item.title)}
+            >
+              <Icon name="whatsapp" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.callButton}
-            onPress={() => handleCall(item.sellerPhone, item.sellerName)}
-          >
-            <Icon name="phone" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.whatsappButton}
-            onPress={() => handleWhatsApp(item.sellerPhone, item.title)}
-          >
-            <Icon name="whatsapp" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Animated.View>
+      </Animated.View>
+    </TouchableOpacity>
   );
 
   return (
@@ -313,21 +329,33 @@ const BuyAnimalsScreen = () => {
       topBackgroundColor="#E8E8E8"     // Tinted gray
       bottomBackgroundColor="#000000"  // Black
     >
-      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        {/* App Header */}
-        <View style={styles.appHeader}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.companyName}>NutriDiet</Text>
+        {/* Header - Same as Sell Animal Screen */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: '#ff3b3b',
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderLeftWidth: 2,
+          borderRightWidth: 2,
+          borderColor: '#3a3a3a',
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Icon name="cow" size={32} color="white" style={{ marginRight: 10, textShadowColor: 'rgba(0, 0, 0, 0.3)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 }} />
+            <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold', textShadowColor: 'rgba(0, 0, 0, 0.3)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2, letterSpacing: 1 }}>पशुपालन मंच</Text>
           </View>
           <TouchableOpacity 
-            style={styles.profileButton}
+            style={{ alignItems: 'center' }}
             onPress={() => router.push('/profile')}
           >
-            <Icon name="account-circle" size={28} color="#333" />
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#ffcc00', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
+              <Text style={{ color: '#000000', fontSize: 18, fontWeight: 'bold' }}>R</Text>
+            </View>
+            <Text style={{ color: 'white', fontSize: 14 }}>Profile</Text>
           </TouchableOpacity>
         </View>
-
         {/* Main Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>पशु खरीदें</Text>
@@ -360,7 +388,10 @@ const BuyAnimalsScreen = () => {
           <FlatList
             data={animals}
             renderItem={renderAnimal}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={loading ? <ActivityIndicator size="large" color="#D32F2F" /> : null}
             contentContainerStyle={styles.animalsList}
             refreshControl={
               <RefreshControl
@@ -387,28 +418,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  appHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#E8E8E8',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  companyName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  profileButton: {
-    padding: 4,
   },
   header: {
     flexDirection: 'row',

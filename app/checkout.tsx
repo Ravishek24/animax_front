@@ -11,20 +11,15 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import payuService from '../services/payuService';
 import SafeAreaWrapper from '../components/SafeAreaWrapper';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-}
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState } from './store';
+import type { CartItem } from './slices/cartSlice';
 
 interface UserInfo {
   name: string;
@@ -35,11 +30,8 @@ interface UserInfo {
 
 const CheckoutScreen = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  
-  // Parse cart items from params
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const cartItems: CartItem[] = useSelector((state: RootState) => state.cart.items);
   const [userInfo, setUserInfo] = useState<UserInfo>({
     name: 'Ravishek',
     phone: '8368099277',
@@ -52,42 +44,16 @@ const CheckoutScreen = () => {
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    // Parse cart data from navigation params
-    try {
-      if (params.cartData) {
-        const parsedCart = JSON.parse(params.cartData as string);
-        setCartItems(parsedCart);
-      } else {
-        // Demo data for testing
-        setCartItems([
-          {
-            id: '1',
-            name: 'प्रीमियम गाय का आहार (20 किलो)',
-            price: 850,
-            quantity: 2,
-          },
-          {
-            id: '2',
-            name: 'कैल्शियम सप्लीमेंट (1 किलो)',
-            price: 450,
-            quantity: 1,
-          }
-        ]);
-      }
-    } catch (error) {
-      console.error('Error parsing cart data:', error);
-    }
-
     // Animate sections on load
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, [params.cartData]);
+  }, []);
 
   // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
   const deliveryCharge = subtotal > 500 ? 0 : 50;
   const discount = subtotal > 1000 ? 100 : 0;
   const total = subtotal + deliveryCharge - discount;
@@ -186,7 +152,7 @@ const CheckoutScreen = () => {
             <Text style={styles.sectionTitle}>आपका ऑर्डर</Text>
           </View>
           
-          {cartItems.map((item, index) => (
+          {cartItems.map((item: CartItem, index: number) => (
             <View key={item.id} style={styles.cartItem}>
               <View style={styles.itemIcon}>
                 <Icon name={getItemIcon(item.name)} size={24} color="white" />

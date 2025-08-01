@@ -6,173 +6,170 @@ import {
   TouchableOpacity, 
   Image, 
   ScrollView, 
-  StatusBar
+  StatusBar,
+  SafeAreaView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-import SafeAreaWrapper from '../components/SafeAreaWrapper';
+import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
 
 const ProfileScreen = () => {
   const router = useRouter();
 
   return (
-    <SafeAreaWrapper
-      backgroundColor="#ffffff"
-      topBackgroundColor="#E8E8E8"     // Tinted gray
-      bottomBackgroundColor="#000000"  // Black
-    >
-      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
-      
-      <ScrollView style={styles.scrollView}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Icon name="arrow-left" size={24} color="#000" />
-          </TouchableOpacity>
-          
-          <Text style={styles.headerTitle}>प्रोफाइल</Text>
-          
-          <View style={styles.headerRightContainer}>
-            <TouchableOpacity style={styles.languageButton}>
-              <Text style={styles.languageText}>En | हि</Text>
-              <Icon name="chevron-down" size={18} color="#fff" />
+    <>
+      <SafeAreaViewContext style={styles.container} edges={['left', 'right']}>
+        <ScrollView style={styles.scrollView}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Icon name="arrow-left" size={24} color="#000" />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.moreButton}>
-              <Icon name="dots-vertical" size={24} color="#333" />
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        {/* Profile Info Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileInfo}>
-            <View style={styles.profileImageContainer}>
-              <Image 
-                source={require('../assets/profile.jpg')} 
-                style={styles.profileImage}
-                defaultSource={({ uri: 'https://via.placeholder.com/80' })}
-              />
-              <View style={styles.completionBadge}>
-                <Text style={styles.completionText}>67% अधूरी</Text>
-              </View>
+            <Text style={styles.headerTitle}>प्रोफाइल</Text>
+            
+            <View style={styles.headerRightContainer}>
+              <TouchableOpacity style={styles.languageButton}>
+                <Text style={styles.languageText}>En | हि</Text>
+                <Icon name="chevron-down" size={18} color="#fff" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.moreButton}>
+                <Icon name="dots-vertical" size={24} color="#333" />
+              </TouchableOpacity>
             </View>
-            
-            <View style={styles.profileDetails}>
-              <Text style={styles.profileName}>Ravishek</Text>
-              
-              <View style={styles.locationRow}>
-                <Icon name="map-marker" size={18} color="#666" />
-                <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">
-                  GAUTAMBUDDHA NAGAR Uttar ...
-                </Text>
+          </View>
+          
+          {/* Profile Info Section */}
+          <View style={styles.profileSection}>
+            <View style={styles.profileInfo}>
+              <View style={styles.profileImageContainer}>
+                <Image 
+                  source={require('../assets/profile.jpg')} 
+                  style={styles.profileImage}
+                  defaultSource={({ uri: 'https://via.placeholder.com/80' })}
+                />
+                <View style={styles.completionBadge}>
+                  <Text style={styles.completionText}>67% अधूरी</Text>
+                </View>
               </View>
               
-              <View style={styles.contactRow}>
-                <View style={styles.phoneContainer}>
-                  <Icon name="phone" size={16} color="#666" />
-                  <Text style={styles.phoneText}>8368099277</Text>
+              <View style={styles.profileDetails}>
+                <Text style={styles.profileName}>Ravishek</Text>
+                
+                <View style={styles.locationRow}>
+                  <Icon name="map-marker" size={18} color="#666" />
+                  <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">
+                    GAUTAMBUDDHA NAGAR Uttar ...
+                  </Text>
                 </View>
                 
-                <View style={styles.whatsappContainer}>
-                  <Icon name="whatsapp" size={16} color="#666" />
-                  <Text style={styles.phoneText}>8368099277</Text>
+                <View style={styles.contactRow}>
+                  <View style={styles.phoneContainer}>
+                    <Icon name="phone" size={16} color="#666" />
+                    <Text style={styles.phoneText}>8368099277</Text>
+                  </View>
+                  
+                  <View style={styles.whatsappContainer}>
+                    <Icon name="whatsapp" size={16} color="#666" />
+                    <Text style={styles.phoneText}>8368099277</Text>
+                  </View>
                 </View>
+              </View>
+              
+              <TouchableOpacity style={styles.editButton}>
+                <FeatherIcon name="edit-2" size={20} color="#D32F2F" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Stats Section */}
+          <View style={styles.statsCard}>
+            <Text style={styles.statsTitle}>Animax पर आपका सफर</Text>
+            
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Icon name="cow" size={24} color="#D32F2F" />
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>पशु ऐप पर डाले</Text>
+              </View>
+              
+              <View style={[styles.statItem, styles.statBorder]}>
+                <Icon name="phone" size={24} color="#D32F2F" />
+                <Text style={styles.statValue}>0</Text>
+                <Text style={styles.statLabel}>आपने कॉल किए</Text>
+              </View>
+              
+              <View style={styles.statItem}>
+                <Icon name="calendar-month" size={24} color="#D32F2F" />
+                <Text style={styles.statValue}>1 महीने</Text>
+                <Text style={styles.statLabel}>ऐनिमल से जुड़े</Text>
+              </View>
+            </View>
+          </View>
+          
+          {/* Profile Completion Card */}
+          <View style={styles.completionCard}>
+            <View style={styles.completionContent}>
+              <View style={styles.avatarPlaceholder}>
+                <Icon name="alert-circle" size={24} color="#E53935" />
+                <Text style={styles.avatarText}>अधूरी प्रोफाइल</Text>
+              </View>
+              
+              <View style={styles.completionTextContainer}>
+                <Text style={styles.completionTitleText}>
+                  आपकी प्रोफाइल <Text style={styles.percentText}>67% अधूरी</Text> है
+                </Text>
+                <Text style={styles.completionDescription}>
+                  प्रोफाइल पूरा करें और <Icon name="circle" size={12} color="#FFC107" /> 10 कॉइन्स पाएँ
+                </Text>
               </View>
             </View>
             
-            <TouchableOpacity style={styles.editButton}>
-              <FeatherIcon name="edit-2" size={20} color="#D32F2F" />
+            <TouchableOpacity style={styles.completeButton}>
+              <Text style={styles.completeButtonText}>अभी पूरी करें</Text>
             </TouchableOpacity>
           </View>
-        </View>
-        
-        {/* Stats Section */}
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Animax पर आपका सफर</Text>
           
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Icon name="cow" size={24} color="#D32F2F" />
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>पशु ऐप पर डाले</Text>
+          {/* Wallet Section */}
+          <View style={styles.walletContainer}>
+            <View style={styles.walletHeader}>
+              <View style={styles.walletTitleContainer}>
+                <Icon name="wallet" size={24} color="#FFC107" />
+                <Text style={styles.walletTitle}>वॉलेट</Text>
+              </View>
+              
+              <View style={styles.coinContainer}>
+                <Icon name="circle" size={20} color="#FFC107" />
+                <Text style={styles.coinCount}>0</Text>
+              </View>
             </View>
             
-            <View style={[styles.statItem, styles.statBorder]}>
-              <Icon name="phone" size={24} color="#D32F2F" />
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>आपने कॉल किए</Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <Icon name="calendar-month" size={24} color="#D32F2F" />
-              <Text style={styles.statValue}>1 महीने</Text>
-              <Text style={styles.statLabel}>ऐनिमल से जुड़े</Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Profile Completion Card */}
-        <View style={styles.completionCard}>
-          <View style={styles.completionContent}>
-            <View style={styles.avatarPlaceholder}>
-              <Icon name="alert-circle" size={24} color="#E53935" />
-              <Text style={styles.avatarText}>अधूरी प्रोफाइल</Text>
-            </View>
-            
-            <View style={styles.completionTextContainer}>
-              <Text style={styles.completionTitleText}>
-                आपकी प्रोफाइल <Text style={styles.percentText}>67% अधूरी</Text> है
-              </Text>
-              <Text style={styles.completionDescription}>
-                प्रोफाइल पूरा करें और <Icon name="circle" size={12} color="#FFC107" /> 10 कॉइन्स पाएँ
-              </Text>
-            </View>
+            <TouchableOpacity style={styles.walletButton}>
+              <Text style={styles.walletButtonText}>वॉलेट देखें</Text>
+              <Icon name="chevron-right" size={20} color="#fff" />
+            </TouchableOpacity>
           </View>
           
-          <TouchableOpacity style={styles.completeButton}>
-            <Text style={styles.completeButtonText}>अभी पूरी करें</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Wallet Section */}
-        <View style={styles.walletContainer}>
-          <View style={styles.walletHeader}>
-            <View style={styles.walletTitleContainer}>
-              <Icon name="wallet" size={24} color="#FFC107" />
-              <Text style={styles.walletTitle}>वॉलेट</Text>
+          {/* User's Animals */}
+          <View style={styles.animalsContainer}>
+            <View style={styles.animalsTitleContainer}>
+              <Icon name="cow" size={24} color="#333" />
+              <Text style={styles.animalsTitle}>Ravishek जी के पशु</Text>
             </View>
             
-            <View style={styles.coinContainer}>
-              <Icon name="circle" size={20} color="#FFC107" />
-              <Text style={styles.coinCount}>0</Text>
-            </View>
+            <TouchableOpacity style={styles.supportButton}>
+              <Icon name="headset" size={20} color="#fff" />
+              <Text style={styles.supportButtonText}>ग्राहक सेवा</Text>
+            </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity style={styles.walletButton}>
-            <Text style={styles.walletButtonText}>वॉलेट देखें</Text>
-            <Icon name="chevron-right" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        
-        {/* User's Animals */}
-        <View style={styles.animalsContainer}>
-          <View style={styles.animalsTitleContainer}>
-            <Icon name="cow" size={24} color="#333" />
-            <Text style={styles.animalsTitle}>Ravishek जी के पशु</Text>
-          </View>
-          
-          <TouchableOpacity style={styles.supportButton}>
-            <Icon name="headset" size={20} color="#fff" />
-            <Text style={styles.supportButtonText}>ग्राहक सेवा</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaWrapper>
+        </ScrollView>
+      </SafeAreaViewContext>
+    </>
   );
 };
 

@@ -7,7 +7,7 @@ import {
   Image, 
   ScrollView, 
   TextInput,
-  StatusBar,
+  Alert,
   Switch,
   Platform
 } from 'react-native';
@@ -295,26 +295,33 @@ const AnimalSellScreen = () => {
 
   return (
     <>
-      <StatusBar backgroundColor="#ff3b3b" barStyle="light-content" translucent={false} />
       
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Icon name="cow" size={24} color="#D32F2F" />
-            <Text style={styles.headerTitle}>पशुपालन मंच</Text>
+        {/* Header - Same as Home Screen */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: '#ff3b3b',
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderLeftWidth: 2,
+          borderRightWidth: 2,
+          borderColor: '#3a3a3a',
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Icon name="cow" size={32} color="white" style={{ marginRight: 10, textShadowColor: 'rgba(0, 0, 0, 0.3)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 }} />
+            <Text style={{ color: 'white', fontSize: 22, fontWeight: 'bold', textShadowColor: 'rgba(0, 0, 0, 0.3)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2, letterSpacing: 1 }}>पशुपालन मंच</Text>
           </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet')}>
-              <Icon name="circle" size={14} color="#FFC107" />
-              <Icon name="wallet" size={24} color="#D32F2F" />
-              <Text style={styles.headerButtonText}>वॉलेट</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
-              <Icon name="account" size={24} color="#D32F2F" />
-              <Text style={styles.headerButtonText}>प्रोफाइल</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={{ alignItems: 'center' }}
+            onPress={() => router.push('/profile')}
+          >
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#ffcc00', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
+              <Text style={{ color: '#000000', fontSize: 18, fontWeight: 'bold' }}>R</Text>
+            </View>
+            <Text style={{ color: 'white', fontSize: 14 }}>Profile</Text>
+          </TouchableOpacity>
         </View>
         
         {/* Main content based on selected tab */}

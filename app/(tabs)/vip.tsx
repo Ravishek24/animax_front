@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, StatusBar, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../../components/SafeAreaWrapper';
 
@@ -12,7 +12,6 @@ const VipScreen = () => {
       topBackgroundColor="#E8E8E8"     // Tinted gray
       bottomBackgroundColor="#000000"  // Black
     >
-      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={styles.centered}>

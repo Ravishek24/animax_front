@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   TextInput,
   Dimensions,
   FlatList,
@@ -18,6 +17,9 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../../components/SafeAreaWrapper';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart } from '../slices/cartSlice';
+import type { RootState } from '../store';
 
 const { width } = Dimensions.get('window');
 
@@ -91,11 +93,37 @@ const RECOMMENDED_PRODUCTS = [
   },
 ];
 
+interface Product {
+  id: string | number;
+  name: string;
+  price: number | string;
+  description?: string;
+  brand?: string;
+  target_animal?: string;
+  ingredients?: string;
+  dosage_amount?: string;
+  dosage_unit?: string;
+  dosage_frequency?: string;
+  net_weight?: string;
+  stock_quantity?: number;
+  status?: string;
+  images: { uri: string }[];
+  rating?: number;
+  reviews?: number;
+  features?: string[];
+  stockAvailable?: boolean;
+}
+
+interface ProductCardProps {
+  product: Product;
+  onPress: (product: Product) => void;
+}
+
 // Image Carousel component
-const ImageCarousel = ({ images }) => {
+const ImageCarousel = ({ images }: { images: { uri: string }[] }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const handleScroll = (event) => {
+  const handleScroll = (event: any) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const itemWidth = width / 2 - 15;
     const index = Math.round(scrollPosition / itemWidth);
@@ -111,9 +139,9 @@ const ImageCarousel = ({ images }) => {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(_, index) => `image_${index}`}
+        keyExtractor={(_: any, index: number) => `image_${index}`}
         onMomentumScrollEnd={handleScroll}
-        renderItem={({ item }) => (
+        renderItem={({ item }: { item: { uri: string } }) => (
           <View style={styles.carouselItem}>
             <Image
               source={item}
@@ -126,7 +154,7 @@ const ImageCarousel = ({ images }) => {
       
       {images.length > 1 && (
         <View style={styles.paginationContainer}>
-          {images.map((_, index) => (
+          {images.map((_: any, index: number) => (
             <View
               key={`dot_${index}`}
               style={[
@@ -141,8 +169,8 @@ const ImageCarousel = ({ images }) => {
   );
 };
 
-const ProductCard = ({ product, onPress }) => {
-  const renderStars = (rating) => {
+const ProductCard = ({ product, onPress }: ProductCardProps) => {
+  const renderStars = (rating: number = 0) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       if (i <= rating) {
@@ -181,7 +209,7 @@ const ProductCard = ({ product, onPress }) => {
           <View style={styles.ratingStars}>
             {renderStars(product.rating)}
           </View>
-          <Text style={styles.reviewCount}>({product.reviews})</Text>
+          <Text style={styles.reviewCount}>({product.reviews || 0})</Text>
         </View>
         <TouchableOpacity 
           style={[
@@ -203,34 +231,41 @@ const ProductCard = ({ product, onPress }) => {
   );
 };
 
+const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.sociamosaic.com'; // Update this with your domain
+
 const MarketplaceScreen = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [allProducts, setAllProducts] = useState([...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const productsPerPage = 12;
-  const [displayedProducts, setDisplayedProducts] = useState([]);
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [activeCategory, setActiveCategory] = useState('1');
   const [searchQuery, setSearchQuery] = useState('');
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
-    loadInitialProducts();
+    fetch(`${BACKEND_URL}/api/supplements`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAllProducts(data.data);
+          setDisplayedProducts(data.data.slice(0, productsPerPage));
+        }
+        setInitialLoading(false);
+      })
+      .catch(() => setInitialLoading(false));
   }, []);
-
-  const loadInitialProducts = () => {
-    setDisplayedProducts(allProducts.slice(0, productsPerPage));
-  };
 
   const loadMoreProducts = () => {
     if (loading) return;
-    
     setLoading(true);
     const nextPage = page + 1;
     const startIndex = (nextPage - 1) * productsPerPage;
     const endIndex = startIndex + productsPerPage;
-    
-    // Simulate API call delay
     setTimeout(() => {
       const newProducts = allProducts.slice(startIndex, endIndex);
       if (newProducts.length > 0) {
@@ -241,7 +276,7 @@ const MarketplaceScreen = () => {
     }, 1000);
   };
 
-  const handleProductPress = (product) => {
+  const handleProductPress = (product: Product) => {
     router.push({
       pathname: '/product-details',
       params: { product: JSON.stringify(product) }
@@ -258,24 +293,51 @@ const MarketplaceScreen = () => {
     );
   };
 
+  // Cart Icon component
+  const CartIcon = () => {
+    const itemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    return (
+      <TouchableOpacity
+        style={{ marginLeft: 16 }}
+        onPress={() => router.push(`/cart`)}
+      >
+        <Icon name="cart-outline" size={28} color="white" />
+        {itemCount > 0 && (
+          <View style={{
+            position: 'absolute',
+            top: -4,
+            right: -8,
+            backgroundColor: '#ffcc00',
+            borderRadius: 10,
+            paddingHorizontal: 5,
+            minWidth: 18,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Text style={{ color: '#ff3b3b', fontWeight: 'bold', fontSize: 12 }}>{itemCount}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaWrapper
       backgroundColor="#ffffff"
       topBackgroundColor="#E8E8E8"     // Tinted gray
       bottomBackgroundColor="#000000"  // Black
     >
-      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logo}>
-            <Icon name="cow" size={30} color="white" style={styles.logoIcon} />
-            <Text style={styles.logoText}>पशुपालन मंच</Text>
+        <View style={[styles.header, { backgroundColor: '#ff3b3b' }]}> {/* Red header */}
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Icon name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: 'white' }]}>मार्केटप्लेस</Text>
           </View>
-          <TouchableOpacity style={styles.cartButton}>
-            <Icon name="cart-outline" size={28} color="white" />
-          </TouchableOpacity>
+          <CartIcon />
         </View>
 
         <ScrollView style={styles.scrollView}>
@@ -328,15 +390,22 @@ const MarketplaceScreen = () => {
           </View>
 
           {/* Products Grid */}
-          <View style={styles.productsGrid}>
-            {displayedProducts.map((product) => (
-              <ProductCard 
-                key={product.id}
-                product={product}
-                onPress={() => handleProductPress(product)}
-              />
-            ))}
-          </View>
+          {initialLoading ? (
+            <View style={{ alignItems: 'center', marginTop: 40 }}>
+              <ActivityIndicator size="large" color="#D32F2F" />
+              <Text style={{ marginTop: 10 }}>लोड हो रहा है...</Text>
+            </View>
+          ) : (
+            <View style={styles.productsGrid}>
+              {displayedProducts.map((product) => (
+                <ProductCard 
+                  key={product.id}
+                  product={product}
+                  onPress={() => handleProductPress(product)}
+                />
+              ))}
+            </View>
+          )}
 
           {renderFooter()}
           
@@ -369,14 +438,11 @@ const styles = StyleSheet.create({
     borderRightWidth: 2,
     borderColor: '#3a3a3a',
   },
-  logo: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoIcon: {
-    marginRight: 10,
-  },
-  logoText: {
+  headerTitle: {
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
@@ -384,9 +450,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
     letterSpacing: 1,
-  },
-  cartButton: {
-    padding: 4,
+    marginLeft: 10,
   },
   scrollView: {
     flex: 1,
