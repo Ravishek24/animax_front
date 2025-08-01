@@ -22,6 +22,10 @@ const { width, height } = Dimensions.get('window');
 const ProductDetailsScreen = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const [quantity, setQuantity] = useState(1);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const flatListRef = useRef(null);
+  
   let product = null;
   try {
     product = params.product ? JSON.parse(params.product as string) : null;
@@ -41,10 +45,6 @@ const ProductDetailsScreen = () => {
       </SafeAreaWrapper>
     );
   }
-
-  const [quantity, setQuantity] = useState(1);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const flatListRef = useRef(null);
 
   const renderStars = (rating) => {
     const stars = [];

@@ -144,17 +144,6 @@ const BuyAnimalsScreen = () => {
     },
   ];
 
-  useEffect(() => {
-    loadAnimals();
-    
-    // Animate on load
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
   const loadAnimals = async (category?: string, nearby?: boolean) => {
     setLoading(true);
     try {
@@ -183,6 +172,17 @@ const BuyAnimalsScreen = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadAnimals();
+    
+    // Animate on load
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const handleCategorySelect = (category: 'all' | 'cow' | 'buffalo' | 'other') => {
     setSelectedCategory(category);
