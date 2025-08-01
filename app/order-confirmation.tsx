@@ -8,6 +8,7 @@ import {
   StatusBar,
   Animated,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -67,7 +68,7 @@ const OrderConfirmationScreen = () => {
         }),
       ]),
     ]).start();
-  }, []);
+  }, [fadeAnim, params.items, scaleAnim, slideAnim]);
 
   const getEstimatedDelivery = () => {
     const today = new Date();
@@ -81,18 +82,16 @@ const OrderConfirmationScreen = () => {
   };
 
   const handleTrackOrder = () => {
-    router.push({
-      pathname: '/track-order',
-      params: { orderId }
-    });
+    // TODO: Implement order tracking
+    Alert.alert('सूचना', 'ऑर्डर ट्रैकिंग जल्द ही उपलब्ध होगा।');
   };
 
   const handleContinueShopping = () => {
-    router.push('/(tabs)/marketplace');
+    router.push('/marketplace');
   };
 
   const handleGoHome = () => {
-    router.push('/(tabs)/');
+    router.push('/');
   };
 
   return (

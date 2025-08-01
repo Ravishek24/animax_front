@@ -50,7 +50,7 @@ const CheckoutScreen = () => {
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   // Calculate totals
   const subtotal = cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
@@ -77,7 +77,10 @@ const CheckoutScreen = () => {
       'नया पता जोड़ना चाहते हैं?',
       [
         { text: 'रद्द करें', style: 'cancel' },
-        { text: 'नया पता जोड़ें', onPress: () => router.push('/add-address') }
+        { text: 'नया पता जोड़ें', onPress: () => {
+          // TODO: Implement address management
+          Alert.alert('सूचना', 'पता प्रबंधन जल्द ही उपलब्ध होगा।');
+        }}
       ]
     );
   };
