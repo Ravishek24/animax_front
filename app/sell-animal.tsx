@@ -310,7 +310,7 @@ const AnimalSellScreen = () => {
             <Text style={styles.headerTitle}>पशुपालन मंच</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet')}>
+            <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet' as any)}>
               <Icon name="circle" size={14} color="#FFC107" />
               <Icon name="wallet" size={24} color="#D32F2F" />
               <Text style={styles.headerButtonText}>वॉलेट</Text>

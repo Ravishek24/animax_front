@@ -329,10 +329,6 @@ const AnimalSellScreen = () => {
         {selectedTab === 'form' && renderFormScreen()}
         {selectedTab === 'price' && renderPriceScreen()}
         
-        {/* Bottom spacer for tab bar */}
-        <View style={[styles.bottomSpacer, { 
-          height: Platform.OS === 'ios' ? insets.bottom + 85 : 70 
-        }]} />
       </SafeAreaView>
     </>
   );
@@ -666,9 +662,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: 'bold',
   },
-  bottomSpacer: {
-    backgroundColor: 'transparent',
-  },
+
 });
 
 export default AnimalSellScreen;

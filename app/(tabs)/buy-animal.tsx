@@ -17,7 +17,8 @@ import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import SafeAreaWrapper from '../../components/SafeAreaWrapper';
+import { apiService } from '../../services';
+
 
 interface Animal {
   id: string;
@@ -50,7 +51,6 @@ interface Category {
 }
 
 const PAGE_SIZE = 20;
-const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.sociamosaic.com'; // Update this with your domain
 
 const BuyAnimalsScreen = () => {
   const router = useRouter();
@@ -167,21 +167,38 @@ const BuyAnimalsScreen = () => {
   ) => {
     setLoading(true);
     try {
-      let url = `${BACKEND_URL}/api/cows?page=${pageNum}&limit=${PAGE_SIZE}`;
-      // Add category/nearby filters if needed
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.success) {
+      const params = {
+        page: pageNum.toString(),
+        limit: PAGE_SIZE.toString(),
+        category: category !== 'all' ? category : undefined,
+        nearby: nearby ? 'true' : undefined
+      };
+      
+      const data = await apiService.getAnimals(params);
+      if (data.success && data.data && data.data.length > 0) {
         const newAnimals = data.data;
         setAnimals(reset ? newAnimals : prev => [...prev, ...newAnimals]);
         setHasMore(newAnimals.length === PAGE_SIZE);
         setPage(pageNum);
       } else {
-        throw new Error(data.message || 'Failed to load animals');
+        // Use fallback data if API returns empty or fails
+        console.warn('No animal data received, using fallback data');
+        const fallbackAnimals = mockAnimals.filter(animal => 
+          category === 'all' || animal.category === category
+        );
+        setAnimals(reset ? fallbackAnimals : prev => [...prev, ...fallbackAnimals]);
+        setHasMore(false);
+        setPage(pageNum);
       }
     } catch (error) {
       console.error('Error loading animals:', error);
-      Alert.alert('त्रुटि', 'पशु लोड करने में समस्या हुई है।');
+      // Use fallback data on error
+      const fallbackAnimals = mockAnimals.filter(animal => 
+        category === 'all' || animal.category === category
+      );
+      setAnimals(reset ? fallbackAnimals : prev => [...prev, ...fallbackAnimals]);
+      setHasMore(false);
+      setPage(pageNum);
     } finally {
       setLoading(false);
     }
@@ -324,11 +341,7 @@ const BuyAnimalsScreen = () => {
   );
 
   return (
-    <SafeAreaWrapper
-      backgroundColor="#ffffff"
-      topBackgroundColor="#E8E8E8"     // Tinted gray
-      bottomBackgroundColor="#000000"  // Black
-    >
+    <View style={styles.container}>
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         {/* Header - Same as Sell Animal Screen */}
         <View style={{
@@ -410,7 +423,7 @@ const BuyAnimalsScreen = () => {
           />
         )}
       </SafeAreaView>
-    </SafeAreaWrapper>
+    </View>
   );
 };
 

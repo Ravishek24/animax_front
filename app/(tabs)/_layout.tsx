@@ -1,34 +1,25 @@
 // app/(tabs)/_layout.tsx - FIXED VERSION
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import SafeAreaWrapper from '../../components/SafeAreaWrapper';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 export default function TabLayout() {
   return (
-    <SafeAreaWrapper
-      backgroundColor="#ffffff"
-      topBackgroundColor="#E8E8E8"     // Tinted gray
-      bottomBackgroundColor="#000000"  // Black
-    >
+    <ProtectedRoute>
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
             backgroundColor: '#ff3b3b',
             borderTopWidth: 0,
-            height: Platform.OS === 'ios' ? 85 : 60, // Different heights for iOS/Android
-            paddingBottom: Platform.OS === 'ios' ? 25 : 5, // Account for home indicator on iOS
+            height: Platform.OS === 'ios' ? 85 : 60,
+            paddingBottom: Platform.OS === 'ios' ? 25 : 5,
             paddingTop: 5,
             borderLeftWidth: 2,
             borderRightWidth: 2,
             borderColor: '#3a3a3a',
-            // Ensure tab bar stays in safe area
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
           },
           tabBarActiveTintColor: '#ffcc00',
           tabBarInactiveTintColor: 'white',
@@ -37,46 +28,45 @@ export default function TabLayout() {
             fontWeight: '500',
             marginBottom: Platform.OS === 'ios' ? 0 : 5,
           },
-          // Prevent tab bar from interfering with safe area
           tabBarHideOnKeyboard: true,
         }}
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'पशुपालन मंच',
-            tabBarIcon: ({ color }) => <Icon name="home" size={24} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="buy-animal"
-          options={{
-            title: 'पशु खरीदें',
-            tabBarIcon: ({ color }) => <Icon name="cart-outline" size={24} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="sell-animal"
-          options={{
-            title: 'पशु बेचें',
-            tabBarIcon: ({ color }) => <Icon name="tag-outline" size={24} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="marketplace"
-          options={{
-            title: 'मार्केटप्लेस',
-            tabBarIcon: ({ color }) => <Icon name="pill" size={24} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="vip"
-          options={{
-            title: 'VIP बनें',
-            tabBarIcon: ({ color }) => <Icon name="crown" size={24} color={color} />,
-          }}
-        />
-      </Tabs>
-    </SafeAreaWrapper>
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: 'Home',
+              tabBarIcon: ({ color }) => <Icon name="home" size={24} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="buy-animal"
+            options={{
+              title: 'Buy Animal',
+              tabBarIcon: ({ color }) => <Icon name="cart-outline" size={24} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="sell-animal"
+            options={{
+              title: 'Sell Animal',
+              tabBarIcon: ({ color }) => <Icon name="tag-outline" size={24} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="marketplace"
+            options={{
+              title: 'Marketplace',
+              tabBarIcon: ({ color }) => <Icon name="pill" size={24} color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="vip"
+            options={{
+              title: 'VIP',
+              tabBarIcon: ({ color }) => <Icon name="crown" size={24} color={color} />,
+            }}
+          />
+        </Tabs>
+    </ProtectedRoute>
   );
 }

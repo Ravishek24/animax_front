@@ -15,11 +15,12 @@ import {
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import SafeAreaWrapper from '../../components/SafeAreaWrapper';
+
+
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../slices/cartSlice';
 import type { RootState } from '../store';
+import { apiService } from '../../services';
 
 const { width } = Dimensions.get('window');
 
@@ -170,7 +171,10 @@ const ImageCarousel = ({ images }: { images: { uri: string }[] }) => {
 };
 
 const ProductCard = ({ product, onPress }: ProductCardProps) => {
+  console.log('🎨 Rendering ProductCard with product:', JSON.stringify(product, null, 2));
+  
   const renderStars = (rating: number = 0) => {
+    console.log('⭐ Rendering stars for rating:', rating);
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       if (i <= rating) {
@@ -183,7 +187,8 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
         );
       }
     }
-    return stars;
+    console.log('⭐ Stars array created, length:', stars.length);
+    return <View style={{ flexDirection: 'row' }}>{stars}</View>;
   };
 
   return (
@@ -203,13 +208,13 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
       </View>
       
       <View style={styles.productDetails}>
-        <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
-        <Text style={styles.productPrice}>₹{product.price}</Text>
+        <Text style={styles.productName} numberOfLines={2}>{String(product.name || 'Unnamed Product')}</Text>
+        <Text style={styles.productPrice}>₹{String(product.price || 0)}</Text>
         <View style={styles.productRating}>
           <View style={styles.ratingStars}>
-            {renderStars(product.rating)}
+            {renderStars(Number(product.rating) || 0)}
           </View>
-          <Text style={styles.reviewCount}>({product.reviews || 0})</Text>
+          <Text style={styles.reviewCount}>({Number(product.reviews) || 0})</Text>
         </View>
         <TouchableOpacity 
           style={[
@@ -219,7 +224,7 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
           disabled={!product.stockAvailable}
           onPress={(e) => {
             e.stopPropagation();
-            console.log('Add to cart:', product.name);
+            console.log('Add to cart:', String(product.name || 'Unnamed Product'));
           }}
         >
           <Text style={styles.addToCartText}>
@@ -231,11 +236,8 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
   );
 };
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.sociamosaic.com'; // Update this with your domain
-
 const MarketplaceScreen = () => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -246,18 +248,81 @@ const MarketplaceScreen = () => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+
+  console.log('🛒 Redux cart state:', JSON.stringify(cartItems, null, 2));
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/supplements`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setAllProducts(data.data);
-          setDisplayedProducts(data.data.slice(0, productsPerPage));
+    const fetchSupplements = async () => {
+      try {
+        console.log('🔍 Starting fetchSupplements...');
+        setError(null);
+        const data = await apiService.getSupplements();
+        console.log('📦 Raw API data received:', JSON.stringify(data, null, 2));
+        
+        if (data.success && data.data) {
+          console.log('✅ API returned success with data, length:', data.data.length);
+          // Transform the data to ensure it has the required structure
+          const transformedProducts = data.data.map((product: any, index: number) => {
+            console.log(`🔄 Transforming product ${index}:`, JSON.stringify(product, null, 2));
+            const transformed = {
+              ...product,
+              id: product.id || product.supplement_id || Math.random().toString(),
+              name: String(product.name || product.supplement_name || 'Unnamed Product'),
+              price: product.price || product.cost || 0,
+              description: String(product.description || product.supplement_description || ''),
+              images: product.images || product.supplement_images || [{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }],
+              rating: Number(product.rating) || 0,
+              reviews: Number(product.reviews) || 0,
+              stockAvailable: Boolean(product.stock_quantity > 0 || true),
+              stock_quantity: Number(product.stock_quantity) || 0,
+              brand: String(product.brand || ''),
+              target_animal: String(product.target_animal || ''),
+              ingredients: String(product.ingredients || ''),
+              dosage_amount: String(product.dosage_amount || ''),
+              dosage_unit: String(product.dosage_unit || ''),
+              dosage_frequency: String(product.dosage_frequency || ''),
+              net_weight: String(product.net_weight || ''),
+              status: String(product.status || 'active')
+            };
+            console.log(`✅ Transformed product ${index}:`, JSON.stringify(transformed, null, 2));
+            return transformed;
+          });
+          
+          console.log('🎯 Setting transformed products, count:', transformedProducts.length);
+          setAllProducts(transformedProducts);
+          setDisplayedProducts(transformedProducts.slice(0, productsPerPage));
+          console.log('✅ Products set successfully');
+        } else {
+          console.warn('⚠️ No supplement data received or API returned failure');
+          // Use fallback data instead of empty array
+          const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
+          console.log('🔄 Using fallback products, count:', fallbackProducts.length);
+          setAllProducts(fallbackProducts);
+          setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
         }
+      } catch (error) {
+        console.error('❌ Error fetching supplements:', error);
+        // Use fallback data on error instead of empty array
+        const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
+        console.log('🔄 Using fallback products due to error, count:', fallbackProducts.length);
+        setAllProducts(fallbackProducts);
+        setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
+        
+                              // Only show error if it's not the SupplementImage association error
+                      if (error instanceof Error && !error.message.includes('SupplementImage')) {
+                        setError('Data loading failed');
+                      }
+      } finally {
+        console.log('🏁 Setting initialLoading to false');
         setInitialLoading(false);
-      })
-      .catch(() => setInitialLoading(false));
+      }
+    };
+
+    console.log('🚀 Calling fetchSupplements...');
+    fetchSupplements();
   }, []);
 
   const loadMoreProducts = () => {
@@ -295,7 +360,9 @@ const MarketplaceScreen = () => {
 
   // Cart Icon component
   const CartIcon = () => {
-    const itemCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    console.log('🛒 Rendering CartIcon, cartItems:', JSON.stringify(cartItems, null, 2));
+    const itemCount = cartItems?.reduce((sum, item) => sum + (Number(item?.quantity) || 1), 0) || 0;
+    console.log('🛒 Calculated itemCount:', itemCount);
     return (
       <TouchableOpacity
         style={{ marginLeft: 16 }}
@@ -314,23 +381,21 @@ const MarketplaceScreen = () => {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <Text style={{ color: '#ff3b3b', fontWeight: 'bold', fontSize: 12 }}>{itemCount}</Text>
+            <Text style={{ color: '#ff3b3b', fontWeight: 'bold', fontSize: 12 }}>{String(itemCount)}</Text>
           </View>
         )}
       </TouchableOpacity>
     );
   };
 
+  console.log('🏠 Rendering MarketplaceScreen, displayedProducts count:', displayedProducts.length);
+  console.log('🏠 initialLoading:', initialLoading);
+  console.log('🏠 error:', error);
+
   return (
-    <SafeAreaWrapper
-      backgroundColor="#ffffff"
-      topBackgroundColor="#E8E8E8"     // Tinted gray
-      bottomBackgroundColor="#000000"  // Black
-    >
-      
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: '#ff3b3b' }]}> {/* Red header */}
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: '#ff3b3b' }]}> {/* Red header */}
           <View style={styles.headerLeft}>
             <TouchableOpacity onPress={() => router.back()}>
               <Icon name="arrow-left" size={24} color="white" />
@@ -395,30 +460,105 @@ const MarketplaceScreen = () => {
               <ActivityIndicator size="large" color="#D32F2F" />
               <Text style={{ marginTop: 10 }}>लोड हो रहा है...</Text>
             </View>
-          ) : (
+          ) : error ? (
+            <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>
+              <Text style={{ fontSize: 16, color: '#D32F2F', textAlign: 'center', marginBottom: 10 }}>
+                {error}
+              </Text>
+              <TouchableOpacity 
+                style={{ 
+                  backgroundColor: '#D32F2F', 
+                  paddingHorizontal: 20, 
+                  paddingVertical: 10, 
+                  borderRadius: 20 
+                }}
+                onPress={() => {
+                  setError(null);
+                  setInitialLoading(true);
+                  // Retry fetching
+                  const fetchSupplements = async () => {
+                    try {
+                      const data = await apiService.getSupplements();
+                      if (data.success && data.data) {
+                        const transformedProducts = data.data.map((product: any) => ({
+                          ...product,
+                          id: product.id || product.supplement_id || Math.random().toString(),
+                          name: String(product.name || product.supplement_name || 'Unnamed Product'),
+                          price: product.price || product.cost || 0,
+                          description: String(product.description || product.supplement_description || ''),
+                          images: product.images || product.supplement_images || [{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }],
+                          rating: Number(product.rating) || 0,
+                          reviews: Number(product.reviews) || 0,
+                          stockAvailable: Boolean(product.stock_quantity > 0 || true),
+                          stock_quantity: Number(product.stock_quantity) || 0,
+                          brand: String(product.brand || ''),
+                          target_animal: String(product.target_animal || ''),
+                          ingredients: String(product.ingredients || ''),
+                          dosage_amount: String(product.dosage_amount || ''),
+                          dosage_unit: String(product.dosage_unit || ''),
+                          dosage_frequency: String(product.dosage_frequency || ''),
+                          net_weight: String(product.net_weight || ''),
+                          status: String(product.status || 'active')
+                        }));
+                        setAllProducts(transformedProducts);
+                        setDisplayedProducts(transformedProducts.slice(0, productsPerPage));
+                      } else {
+                        // Use fallback data instead of empty array
+                        const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
+                        setAllProducts(fallbackProducts);
+                        setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
+                      }
+                    } catch (error) {
+                      console.error('Error fetching supplements:', error);
+                      // Use fallback data on error instead of empty array
+                      const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
+                      setAllProducts(fallbackProducts);
+                      setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
+                      
+                      // Only show error if it's not the SupplementImage association error
+                      if (error instanceof Error && !error.message.includes('SupplementImage')) {
+                        setError('Data loading failed');
+                      }
+                    } finally {
+                      setInitialLoading(false);
+                    }
+                  };
+                  fetchSupplements();
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>पुनः प्रयास करें</Text>
+              </TouchableOpacity>
+            </View>
+          ) : displayedProducts.length > 0 ? (
             <View style={styles.productsGrid}>
-              {displayedProducts.map((product) => (
-                <ProductCard 
-                  key={product.id}
-                  product={product}
-                  onPress={() => handleProductPress(product)}
-                />
-              ))}
+              {(() => {
+                console.log('📦 About to map displayedProducts, count:', displayedProducts.length);
+                return displayedProducts.map((product, index) => {
+                  console.log(`📦 Mapping product ${index}:`, JSON.stringify(product, null, 2));
+                  return (
+                    <ProductCard 
+                      key={product.id}
+                      product={product}
+                      onPress={() => handleProductPress(product)}
+                    />
+                  );
+                });
+              })()}
+            </View>
+          ) : (
+            <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>
+              <Text style={{ fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 10 }}>
+                कोई उत्पाद नहीं मिला
+              </Text>
+              <Text style={{ fontSize: 14, color: '#999', textAlign: 'center' }}>
+                कृपया बाद में पुनः प्रयास करें या अन्य श्रेणियां देखें
+              </Text>
             </View>
           )}
 
           {renderFooter()}
-          
-          {/* Bottom Spacer */}
-          <View style={styles.bottomSpacerContent} />
         </ScrollView>
-        
-        {/* Bottom spacer for tab bar */}
-        <View style={[styles.bottomSpacer, { 
-          height: Platform.OS === 'ios' ? insets.bottom + 85 : 70 
-        }]} />
-      </SafeAreaView>
-    </SafeAreaWrapper>
+    </View>
   );
 };
 
@@ -659,9 +799,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  bottomSpacerContent: {
-    height: 20,
-  },
   loadingFooter: {
     paddingVertical: 20,
     alignItems: 'center',
@@ -671,9 +808,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#666',
     fontSize: 14,
-  },
-  bottomSpacer: {
-    backgroundColor: 'transparent',
   },
 });
 

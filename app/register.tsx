@@ -1,23 +1,72 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ActivityIndicator, 
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import SafeAreaWrapper from '../components/SafeAreaWrapper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.sociamosaic.com';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services';
 
 const RegisterScreen = () => {
   const router = useRouter();
+  const { login } = useAuth();
   const params = useLocalSearchParams();
   const { sessionUuid, phoneNumber } = params;
-
   const [fullName, setFullName] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const addressRef = useRef<any>(null);
+
+  const handleAddressSelect = (data: any, details: any = null) => {
+    if (details) {
+      setAddress(data.description);
+      
+      // Extract address components
+      const addressComponents = details.address_components;
+      let cityName = '';
+      let stateName = '';
+      let pincodeValue = '';
+
+      for (const component of addressComponents) {
+        if (component.types.includes('locality')) {
+          cityName = component.long_name;
+        }
+        if (component.types.includes('administrative_area_level_1')) {
+          stateName = component.long_name;
+        }
+        if (component.types.includes('postal_code')) {
+          pincodeValue = component.long_name;
+        }
+      }
+
+      setCity(cityName);
+      setState(stateName);
+      setPincode(pincodeValue);
+      setLatitude(details.geometry.location.lat);
+      setLongitude(details.geometry.location.lng);
+    }
+  };
+
   const handleRegister = async () => {
     setError('');
+    
     if (!fullName.trim()) {
       setError('कृपया अपना पूरा नाम दर्ज करें');
       return;
@@ -28,22 +77,29 @@ const RegisterScreen = () => {
       return;
     }
 
+    if (!address.trim()) {
+      setError('कृपया अपना पता दर्ज करें');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          sessionUuid,
-          fullName: fullName.trim()
-        })
-      });
+      const userData = {
+        sessionUuid: typeof sessionUuid === 'string' ? sessionUuid : Array.isArray(sessionUuid) ? sessionUuid[0] : '',
+        fullName: fullName.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        pincode: pincode.trim(),
+        latitude: latitude || 0,
+        longitude: longitude || 0
+      };
 
-      const data = await response.json();
+      const data = await apiService.register(userData);
       
       if (data.success) {
-        // Store token and user data
-        // You can use AsyncStorage or Redux here
+        // Store token and user data using AuthContext
+        await login(data.user, data.token || '');
         Alert.alert('सफल', 'रजिस्ट्रेशन सफल! आपका अकाउंट बन गया है', [
           { 
             text: 'ठीक है', 
@@ -66,13 +122,19 @@ const RegisterScreen = () => {
   };
 
   return (
-    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Icon name="account-plus" size={64} color="#ff3b3b" style={{ marginBottom: 12 }} />
           <Text style={styles.title}>प्रोफाइल पूरा करें</Text>
           <Text style={styles.subtitle}>
-            अपना पूरा नाम दर्ज करें और अपना अकाउंट बनाएं
+            अपना पूरा नाम और पता दर्ज करें
           </Text>
           <Text style={styles.phoneText}>
             मोबाइल: {phoneNumber}
@@ -80,7 +142,7 @@ const RegisterScreen = () => {
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>पूरा नाम</Text>
+          <Text style={styles.label}>पूरा नाम *</Text>
           <TextInput
             style={styles.input}
             value={fullName}
@@ -90,6 +152,60 @@ const RegisterScreen = () => {
             autoCapitalize="words"
             autoCorrect={false}
           />
+
+          <Text style={styles.label}>पता *</Text>
+          <GooglePlacesAutocomplete
+            ref={addressRef}
+            placeholder="अपना पता खोजें और चुनें"
+            fetchDetails={true}
+            onPress={handleAddressSelect}
+            query={{
+              key: 'YOUR_GOOGLE_PLACES_API_KEY', // Replace with your API key
+              language: 'hi', // Hindi
+              components: 'country:in', // India only
+            }}
+            styles={{
+              container: styles.googlePlacesContainer,
+              textInput: styles.googlePlacesInput,
+              listView: styles.googlePlacesListView,
+            }}
+            enablePoweredByContainer={false}
+            nearbyPlacesAPI="GooglePlacesSearch"
+            debounce={300}
+          />
+
+          <View style={styles.addressDetails}>
+            <Text style={styles.label}>शहर</Text>
+            <TextInput
+              style={styles.input}
+              value={city}
+              onChangeText={setCity}
+              placeholder="शहर"
+              placeholderTextColor="#bbb"
+              editable={false}
+            />
+
+            <Text style={styles.label}>राज्य</Text>
+            <TextInput
+              style={styles.input}
+              value={state}
+              onChangeText={setState}
+              placeholder="राज्य"
+              placeholderTextColor="#bbb"
+              editable={false}
+            />
+
+            <Text style={styles.label}>पिन कोड</Text>
+            <TextInput
+              style={styles.input}
+              value={pincode}
+              onChangeText={setPincode}
+              placeholder="पिन कोड"
+              placeholderTextColor="#bbb"
+              editable={false}
+              keyboardType="numeric"
+            />
+          </View>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -109,8 +225,8 @@ const RegisterScreen = () => {
             <Text style={styles.backText}>वापस लॉगिन पर जाएं</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </SafeAreaWrapper>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -118,9 +234,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   header: {
     alignItems: 'center',
@@ -155,6 +275,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
     alignSelf: 'flex-start',
+    fontWeight: '600',
   },
   input: {
     width: '100%',
@@ -166,6 +287,31 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
     borderRadius: 8,
     backgroundColor: '#fafafa',
+    marginBottom: 12,
+  },
+  googlePlacesContainer: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  googlePlacesInput: {
+    fontSize: 18,
+    color: '#222',
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    backgroundColor: '#fafafa',
+  },
+  googlePlacesListView: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  addressDetails: {
+    width: '100%',
     marginBottom: 12,
   },
   button: {
@@ -199,4 +345,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen; 
+export default RegisterScreen;

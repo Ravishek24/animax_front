@@ -18,7 +18,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../components/SafeAreaWrapper';
-import NutriDietBanner from '../assets/NutriDiet (2).png';
+// import NutriDietBanner from '../assets/NutriDiet (2).png';
 
 const { width } = Dimensions.get('window');
 
@@ -103,10 +103,10 @@ const RECOMMENDED_PRODUCTS = [
 ];
 
 // Image Carousel component
-const ImageCarousel = ({ images }) => {
+const ImageCarousel = ({ images }: { images: any[] }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const handleScroll = (event) => {
+  const handleScroll = (event: any) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const itemWidth = width / 2 - 15;
     const index = Math.round(scrollPosition / itemWidth);
@@ -137,7 +137,7 @@ const ImageCarousel = ({ images }) => {
       
       {images.length > 1 && (
         <View style={styles.paginationContainer}>
-          {images.map((_, index) => (
+          {images.map((_: any, index: number) => (
             <View
               key={`dot_${index}`}
               style={[
@@ -198,7 +198,7 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
     }, 1000);
   };
 
-  const navigateToCheckout = (items) => {
+  const navigateToCheckout = (items: CartItem[]) => {
     router.push({
       pathname: '/checkout',
       params: {
@@ -207,7 +207,7 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
     });
   };
 
-  const renderStars = (rating) => {
+  const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       if (i <= rating) {
@@ -220,7 +220,7 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
         );
       }
     }
-    return stars;
+    return <>{stars}</>;
   };
 
   return (
@@ -277,8 +277,8 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
 };
 
 // Cart Icon component
-const CartIcon = ({ cartItems, router }) => {
-  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+const CartIcon = ({ cartItems, router }: { cartItems: CartItem[], router: any }) => {
+  const itemCount = cartItems.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
   
   return (
     <TouchableOpacity 
@@ -299,9 +299,9 @@ const MarketplaceScreen = () => {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [allProducts, setAllProducts] = useState([...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS]);
+  const [allProducts, setAllProducts] = useState<Product[]>([...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS]);
   const productsPerPage = 12;
-  const [displayedProducts, setDisplayedProducts] = useState([]);
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [activeCategory, setActiveCategory] = useState('1');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -333,7 +333,7 @@ const MarketplaceScreen = () => {
     }, 1000);
   };
 
-  const handleProductPress = (product) => {
+  const handleProductPress = (product: Product) => {
     router.push({
       pathname: '/product-details',
       params: { product: JSON.stringify(product) }
@@ -413,7 +413,7 @@ const MarketplaceScreen = () => {
           {/* Offers Banner */}
           <View style={styles.offersBanner}>
             <Image 
-              source={NutriDietBanner}
+              source={require('../assets/NutriDiet (3).png')}
               style={styles.offersBannerImage}
             />
           </View>

@@ -12,14 +12,11 @@ import {
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import SafeAreaWrapper from '../../components/SafeAreaWrapper';
 
 const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [currentBannerSlide, setCurrentBannerSlide] = React.useState(0);
   const [currentProcessSlide, setCurrentProcessSlide] = React.useState(0);
   
@@ -53,11 +50,7 @@ const HomeScreen = () => {
   }, [currentProcessSlide]);
 
   return (
-    <SafeAreaWrapper
-      backgroundColor="#ffffff"
-      topBackgroundColor="#E8E8E8"  // Tinted gray
-      bottomBackgroundColor="#000000"  // Black
-    >
+    <View style={styles.container}>
       
       {/* Header */}
       <View style={styles.header}>
@@ -76,7 +69,10 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+      >
         {/* Banner Slider */}
         <View style={styles.bannerSlider}>
           <ScrollView 
@@ -299,15 +295,16 @@ const HomeScreen = () => {
         </View>
       </ScrollView>
       
-      {/* Tab bar spacer */}
-      <View style={[styles.tabBarSpacer, { 
-        height: Platform.OS === 'ios' ? insets.bottom + 85 : 70 
-      }]} />
-    </SafeAreaWrapper>
+      {/* Remove the tab bar spacer - it's causing the white block */}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   // Header
   header: {
     flexDirection: 'row',
@@ -315,7 +312,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ff3b3b',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingBottom: 10,
     borderLeftWidth: 2,
     borderRightWidth: 2,
     borderColor: '#3a3a3a',
@@ -365,6 +362,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: '#ffffff',
+  },
+  scrollViewContent: {
+    paddingBottom: 80, // Add padding to the bottom of the ScrollView
   },
   
   // Banner Slider
@@ -666,10 +666,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   
-  // Tab bar spacer
-  tabBarSpacer: {
-    backgroundColor: 'transparent',
-  },
+
 });
 
 export default HomeScreen;

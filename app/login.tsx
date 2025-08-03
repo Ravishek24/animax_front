@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import SafeAreaWrapper from '../components/SafeAreaWrapper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.sociamosaic.com';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services';
 
 const LoginScreen = () => {
   const router = useRouter();
+  const { login } = useAuth();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [sessionUuid, setSessionUuid] = useState('');
@@ -25,18 +24,10 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/send-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          phoneNumber: `+91${phone}` 
-        })
-      });
-
-      const data = await response.json();
+      const data = await apiService.sendOTP(`+91${phone}`);
       
       if (data.success) {
-        setSessionUuid(data.sessionUuid);
+        setSessionUuid(data.sessionUuid || '');
         setOtpSent(true);
         Alert.alert('सफल', 'OTP आपके मोबाइल नंबर पर भेज दिया गया है');
       } else {
@@ -59,22 +50,12 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          sessionUuid,
-          otp 
-        })
-      });
-
-      const data = await response.json();
+      const data = await apiService.verifyOTP(sessionUuid, otp);
       
       if (data.success) {
         if (data.userExists) {
           // User exists - login successful
-          // Store token and user data
-          // You can use AsyncStorage or Redux here
+          await login(data.user, data.token || '');
           Alert.alert('सफल', 'लॉगिन सफल!', [
             { text: 'ठीक है', onPress: () => router.replace('/(tabs)') }
           ]);
@@ -83,8 +64,8 @@ const LoginScreen = () => {
           router.push({
             pathname: '/register',
             params: { 
-              sessionUuid: data.sessionUuid,
-              phoneNumber: data.phoneNumber 
+              sessionUuid: data.sessionUuid || '',
+              phoneNumber: data.phoneNumber || ''
             }
           });
         }
@@ -106,72 +87,70 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        <View style={styles.header}>
-          <Icon name="account-circle" size={64} color="#ff3b3b" style={{ marginBottom: 12 }} />
-          <Text style={styles.title}>{otpSent ? 'OTP सत्यापन' : 'लॉगिन करें'}</Text>
-          <Text style={styles.subtitle}>
-            {otpSent 
-              ? 'अपने मोबाइल पर भेजे गए OTP को दर्ज करें'
-              : 'मोबाइल नंबर दर्ज करें और OTP प्राप्त करें'
-            }
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Icon name="account-circle" size={64} color="#ff3b3b" style={{ marginBottom: 12 }} />
+        <Text style={styles.title}>{otpSent ? 'OTP सत्यापन' : 'लॉगिन करें'}</Text>
+        <Text style={styles.subtitle}>
+          {otpSent 
+            ? 'अपने मोबाइल पर भेजे गए OTP को दर्ज करें'
+            : 'मोबाइल नंबर दर्ज करें और OTP प्राप्त करें'
+          }
+        </Text>
+      </View>
 
-        <View style={styles.form}>
-          {!otpSent ? (
-            <>
-              <Text style={styles.label}>मोबाइल नंबर</Text>
-              <View style={styles.inputRow}>
-                <Text style={styles.countryCode}>+91</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="XXXXXXXXXX"
-                  placeholderTextColor="#bbb"
-                />
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>OTP दर्ज करें</Text>
+      <View style={styles.form}>
+        {!otpSent ? (
+          <>
+            <Text style={styles.label}>मोबाइल नंबर</Text>
+            <View style={styles.inputRow}>
+              <Text style={styles.countryCode}>+91</Text>
               <TextInput
-                style={styles.otpInput}
+                style={styles.input}
                 keyboardType="number-pad"
-                maxLength={6}
-                value={otp}
-                onChangeText={setOtp}
-                placeholder="123456"
+                maxLength={10}
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="XXXXXXXXXX"
                 placeholderTextColor="#bbb"
               />
-              <TouchableOpacity onPress={handleResendOTP} style={styles.resendButton}>
-                <Text style={styles.resendText}>OTP दोबारा भेजें</Text>
-              </TouchableOpacity>
-            </>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.label}>OTP दर्ज करें</Text>
+            <TextInput
+              style={styles.otpInput}
+              keyboardType="number-pad"
+              maxLength={6}
+              value={otp}
+              onChangeText={setOtp}
+              placeholder="123456"
+              placeholderTextColor="#bbb"
+            />
+            <TouchableOpacity onPress={handleResendOTP} style={styles.resendButton}>
+              <Text style={styles.resendText}>OTP दोबारा भेजें</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={otpSent ? handleVerifyOTP : handleSendOTP}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>
+              {otpSent ? 'सत्यापित करें' : 'OTP भेजें'}
+            </Text>
           )}
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={otpSent ? handleVerifyOTP : handleSendOTP}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {otpSent ? 'सत्यापित करें' : 'OTP भेजें'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    </SafeAreaWrapper>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 

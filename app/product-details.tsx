@@ -46,7 +46,7 @@ const ProductDetailsScreen = () => {
     );
   }
 
-  const renderStars = (rating) => {
+  const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       if (i <= rating) {
@@ -59,10 +59,10 @@ const ProductDetailsScreen = () => {
         );
       }
     }
-    return stars;
+    return <>{stars}</>;
   };
 
-  const onSlideChange = (event) => {
+  const onSlideChange = (event: any) => {
     const slideIndex = Math.round(
       event.nativeEvent.contentOffset.x / (width - 40)
     );
@@ -76,7 +76,7 @@ const ProductDetailsScreen = () => {
         url: 'https://pashupalan-manch.com/product/' + product.id,
       });
     } catch (error) {
-      console.log(error.message);
+      console.log((error as Error).message);
     }
   };
 
@@ -128,7 +128,7 @@ const ProductDetailsScreen = () => {
             {/* Image Pagination Dots */}
             {product.images.length > 1 && (
               <View style={styles.paginationContainer}>
-                {product.images.map((_, index) => (
+                {product.images.map((_: any, index: number) => (
                   <View
                     key={`dot_${index}`}
                     style={[
@@ -193,7 +193,7 @@ const ProductDetailsScreen = () => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>विशेषताएँ</Text>
               <View style={styles.featuresList}>
-                {product.features.map((feature, index) => (
+                {product.features.map((feature: string, index: number) => (
                   <View key={index} style={styles.featureItem}>
                     <Icon name="check-circle" size={16} color="#ff3b3b" style={styles.featureIcon} />
                     <Text style={styles.featureText}>{feature}</Text>
