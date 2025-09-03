@@ -165,9 +165,21 @@ class ApiService {
     return this.get<ApiResponse>(API_ENDPOINTS.AUTH.PROFILE);
   }
 
+  async updateProfile(profileData: any): Promise<ApiResponse> {
+    return this.put<ApiResponse>(API_ENDPOINTS.AUTH.PROFILE, profileData);
+  }
+
   // Animals specific methods
   async getAnimals(params: RequestParams = {}): Promise<ApiResponse> {
     return this.get<ApiResponse>(API_ENDPOINTS.ANIMALS.LIST, params);
+  }
+
+  async getAnimalsByLocation(latitude: number, longitude: number, radius: number = 100): Promise<ApiResponse> {
+    return this.get<ApiResponse>(API_ENDPOINTS.ANIMALS.LIST, {
+      latitude,
+      longitude,
+      radius
+    });
   }
 
   async getAnimalDetails(id: string): Promise<ApiResponse> {

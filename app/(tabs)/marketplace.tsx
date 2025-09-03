@@ -1,3 +1,4 @@
+// app/(tabs)/marketplace.tsx - FIXED VERSION
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -16,11 +17,12 @@ import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../slices/cartSlice';
 import type { RootState } from '../store';
 import { apiService } from '../../services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -124,6 +126,21 @@ interface ProductCardProps {
 const ImageCarousel = ({ images }: { images: { uri: string }[] }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Safety check for images
+  if (!images || !Array.isArray(images) || images.length === 0) {
+    return (
+      <View style={styles.carouselContainer}>
+        <View style={styles.carouselItem}>
+          <Image
+            source={{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }}
+            style={[styles.productImage, { width: width / 2 - 15 }]}
+            resizeMode="cover"
+          />
+        </View>
+      </View>
+    );
+  }
+
   const handleScroll = (event: any) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const itemWidth = width / 2 - 15;
@@ -136,7 +153,7 @@ const ImageCarousel = ({ images }: { images: { uri: string }[] }) => {
   return (
     <View style={styles.carouselContainer}>
       <FlatList
-        data={images}
+        data={images || []}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -153,25 +170,60 @@ const ImageCarousel = ({ images }: { images: { uri: string }[] }) => {
         )}
       />
       
-      {images.length > 1 && (
-        <View style={styles.paginationContainer}>
-          {images.map((_: any, index: number) => (
-            <View
-              key={`dot_${index}`}
-              style={[
-                styles.paginationDot,
-                index === activeIndex ? styles.paginationDotActive : {}
-              ]}
-            />
-          ))}
-        </View>
-      )}
+             {images && images.length > 1 && (
+         <View style={styles.paginationContainer}>
+           {images.map((_: any, index: number) => (
+             <View
+               key={`dot_${index}`}
+               style={[
+                 styles.paginationDot,
+                 index === activeIndex ? styles.paginationDotActive : {}
+               ]}
+             />
+           ))}
+         </View>
+       )}
     </View>
   );
 };
 
 const ProductCard = ({ product, onPress }: ProductCardProps) => {
   console.log('🎨 Rendering ProductCard with product:', JSON.stringify(product, null, 2));
+  
+  const handleAddToCart = async (e: any) => {
+    e.stopPropagation();
+    
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert('लॉगिन आवश्यक', 'कार्ट में जोड़ने के लिए कृपया लॉगिन करें');
+        return;
+      }
+
+      const response = await fetch('https://api.sociamosaic.com/api/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          supplement_id: product.id,
+          quantity: 1
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        Alert.alert('सफल', 'कार्ट में जोड़ा गया');
+      } else {
+        Alert.alert('त्रुटि', result.message || 'कार्ट में जोड़ने में समस्या आई');
+      }
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      Alert.alert('त्रुटि', 'कार्ट में जोड़ने में समस्या आई');
+    }
+  };
   
   const renderStars = (rating: number = 0) => {
     console.log('⭐ Rendering stars for rating:', rating);
@@ -222,10 +274,7 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
             !product.stockAvailable && styles.disabledButton
           ]}
           disabled={!product.stockAvailable}
-          onPress={(e) => {
-            e.stopPropagation();
-            console.log('Add to cart:', String(product.name || 'Unnamed Product'));
-          }}
+          onPress={handleAddToCart}
         >
           <Text style={styles.addToCartText}>
             {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
@@ -250,8 +299,6 @@ const MarketplaceScreen = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
-
   console.log('🛒 Redux cart state:', JSON.stringify(cartItems, null, 2));
 
   useEffect(() => {
@@ -262,7 +309,7 @@ const MarketplaceScreen = () => {
         const data = await apiService.getSupplements();
         console.log('📦 Raw API data received:', JSON.stringify(data, null, 2));
         
-        if (data.success && data.data) {
+        if (data.success && data.data && data.data.length > 0) {
           console.log('✅ API returned success with data, length:', data.data.length);
           // Transform the data to ensure it has the required structure
           const transformedProducts = data.data.map((product: any, index: number) => {
@@ -273,7 +320,11 @@ const MarketplaceScreen = () => {
               name: String(product.name || product.supplement_name || 'Unnamed Product'),
               price: product.price || product.cost || 0,
               description: String(product.description || product.supplement_description || ''),
-              images: product.images || product.supplement_images || [{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }],
+              images: Array.isArray(product.images) 
+                ? product.images.map((img: string) => ({ uri: img }))
+                : Array.isArray(product.supplement_images)
+                ? product.supplement_images.map((img: string) => ({ uri: img }))
+                : [{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }],
               rating: Number(product.rating) || 0,
               reviews: Number(product.reviews) || 0,
               stockAvailable: Boolean(product.stock_quantity > 0 || true),
@@ -311,10 +362,10 @@ const MarketplaceScreen = () => {
         setAllProducts(fallbackProducts);
         setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
         
-                              // Only show error if it's not the SupplementImage association error
-                      if (error instanceof Error && !error.message.includes('SupplementImage')) {
-                        setError('Data loading failed');
-                      }
+        // Only show error if it's not the SupplementImage association error
+        if (error instanceof Error && !error.message.includes('SupplementImage')) {
+          setError('Data loading failed');
+        }
       } finally {
         console.log('🏁 Setting initialLoading to false');
         setInitialLoading(false);
@@ -358,7 +409,7 @@ const MarketplaceScreen = () => {
     );
   };
 
-  // Cart Icon component
+  // Cart Icon component - FIXED
   const CartIcon = () => {
     console.log('🛒 Rendering CartIcon, cartItems:', JSON.stringify(cartItems, null, 2));
     const itemCount = cartItems?.reduce((sum, item) => sum + (Number(item?.quantity) || 1), 0) || 0;
@@ -366,7 +417,7 @@ const MarketplaceScreen = () => {
     return (
       <TouchableOpacity
         style={{ marginLeft: 16 }}
-        onPress={() => router.push(`/cart`)}
+        onPress={() => router.push('/cart')}
       >
         <Icon name="cart-outline" size={28} color="white" />
         {itemCount > 0 && (
@@ -381,7 +432,9 @@ const MarketplaceScreen = () => {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <Text style={{ color: '#ff3b3b', fontWeight: 'bold', fontSize: 12 }}>{String(itemCount)}</Text>
+            <Text style={{ color: '#ff3b3b', fontWeight: 'bold', fontSize: 12 }}>
+              {itemCount}
+            </Text>
           </View>
         )}
       </TouchableOpacity>
@@ -395,169 +448,169 @@ const MarketplaceScreen = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: '#ff3b3b' }]}> {/* Red header */}
-          <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Icon name="arrow-left" size={24} color="white" />
+      <View style={[styles.header, { backgroundColor: '#ff3b3b' }]}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Icon name="arrow-left" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: 'white' }]}>मार्केटप्लेस</Text>
+        </View>
+        <CartIcon />
+      </View>
+
+      <ScrollView style={styles.scrollView}>
+        {/* Page Title */}
+        <Text style={styles.pageTitle}>पशु आहार और दवाइयां</Text>
+        
+        {/* Search Bar */}
+        <View style={styles.searchBar}>
+          <Icon name="magnify" size={24} color="#999" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="आहार, दवाइयां, सप्लीमेंट्स खोजें..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        
+        {/* Categories */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.categories}
+          contentContainerStyle={styles.categoriesContent}
+        >
+          {CATEGORIES.map((category) => (
+            <TouchableOpacity 
+              key={category.id}
+              style={[
+                styles.category, 
+                activeCategory === category.id && styles.activeCategory
+              ]}
+              onPress={() => setActiveCategory(category.id)}
+            >
+              <Text style={[
+                styles.categoryText,
+                activeCategory === category.id && styles.activeCategoryText
+              ]}>
+                {category.name}
+              </Text>
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: 'white' }]}>मार्केटप्लेस</Text>
-          </View>
-          <CartIcon />
+          ))}
+        </ScrollView>
+        
+        {/* Offers Banner */}
+        <View style={styles.offersBanner}>
+          <Image 
+            source={require('../../assets/NutriDiet (3).png')}
+            style={styles.offersBannerImage}
+          />
         </View>
 
-        <ScrollView style={styles.scrollView}>
-          {/* Page Title */}
-          <Text style={styles.pageTitle}>पशु आहार और दवाइयां</Text>
-          
-          {/* Search Bar */}
-          <View style={styles.searchBar}>
-            <Icon name="magnify" size={24} color="#999" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="आहार, दवाइयां, सप्लीमेंट्स खोजें..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
+        {/* Products Grid */}
+        {initialLoading ? (
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <ActivityIndicator size="large" color="#D32F2F" />
+            <Text style={{ marginTop: 10 }}>लोड हो रहा है...</Text>
           </View>
-          
-          {/* Categories */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.categories}
-            contentContainerStyle={styles.categoriesContent}
-          >
-            {CATEGORIES.map((category) => (
-              <TouchableOpacity 
-                key={category.id}
-                style={[
-                  styles.category, 
-                  activeCategory === category.id && styles.activeCategory
-                ]}
-                onPress={() => setActiveCategory(category.id)}
-              >
-                <Text style={[
-                  styles.categoryText,
-                  activeCategory === category.id && styles.activeCategoryText
-                ]}>
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          
-          {/* Offers Banner */}
-          <View style={styles.offersBanner}>
-            <Image 
-              source={require('../../assets/NutriDiet (3).png')}
-              style={styles.offersBannerImage}
-            />
-          </View>
-
-          {/* Products Grid */}
-          {initialLoading ? (
-            <View style={{ alignItems: 'center', marginTop: 40 }}>
-              <ActivityIndicator size="large" color="#D32F2F" />
-              <Text style={{ marginTop: 10 }}>लोड हो रहा है...</Text>
-            </View>
-          ) : error ? (
-            <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>
-              <Text style={{ fontSize: 16, color: '#D32F2F', textAlign: 'center', marginBottom: 10 }}>
-                {error}
-              </Text>
-              <TouchableOpacity 
-                style={{ 
-                  backgroundColor: '#D32F2F', 
-                  paddingHorizontal: 20, 
-                  paddingVertical: 10, 
-                  borderRadius: 20 
-                }}
-                onPress={() => {
-                  setError(null);
-                  setInitialLoading(true);
-                  // Retry fetching
-                  const fetchSupplements = async () => {
-                    try {
-                      const data = await apiService.getSupplements();
-                      if (data.success && data.data) {
-                        const transformedProducts = data.data.map((product: any) => ({
-                          ...product,
-                          id: product.id || product.supplement_id || Math.random().toString(),
-                          name: String(product.name || product.supplement_name || 'Unnamed Product'),
-                          price: product.price || product.cost || 0,
-                          description: String(product.description || product.supplement_description || ''),
-                          images: product.images || product.supplement_images || [{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }],
-                          rating: Number(product.rating) || 0,
-                          reviews: Number(product.reviews) || 0,
-                          stockAvailable: Boolean(product.stock_quantity > 0 || true),
-                          stock_quantity: Number(product.stock_quantity) || 0,
-                          brand: String(product.brand || ''),
-                          target_animal: String(product.target_animal || ''),
-                          ingredients: String(product.ingredients || ''),
-                          dosage_amount: String(product.dosage_amount || ''),
-                          dosage_unit: String(product.dosage_unit || ''),
-                          dosage_frequency: String(product.dosage_frequency || ''),
-                          net_weight: String(product.net_weight || ''),
-                          status: String(product.status || 'active')
-                        }));
-                        setAllProducts(transformedProducts);
-                        setDisplayedProducts(transformedProducts.slice(0, productsPerPage));
-                      } else {
-                        // Use fallback data instead of empty array
-                        const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
-                        setAllProducts(fallbackProducts);
-                        setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
-                      }
-                    } catch (error) {
-                      console.error('Error fetching supplements:', error);
-                      // Use fallback data on error instead of empty array
+        ) : error ? (
+          <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>
+            <Text style={{ fontSize: 16, color: '#D32F2F', textAlign: 'center', marginBottom: 10 }}>
+              {error}
+            </Text>
+            <TouchableOpacity 
+              style={{ 
+                backgroundColor: '#D32F2F', 
+                paddingHorizontal: 20, 
+                paddingVertical: 10, 
+                borderRadius: 20 
+              }}
+              onPress={() => {
+                setError(null);
+                setInitialLoading(true);
+                // Retry fetching
+                const fetchSupplements = async () => {
+                  try {
+                    const data = await apiService.getSupplements();
+                    if (data.success && data.data) {
+                      const transformedProducts = data.data.map((product: any) => ({
+                        ...product,
+                        id: product.id || product.supplement_id || Math.random().toString(),
+                        name: String(product.name || product.supplement_name || 'Unnamed Product'),
+                        price: product.price || product.cost || 0,
+                        description: String(product.description || product.supplement_description || ''),
+                        images: product.images || product.supplement_images || [{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }],
+                        rating: Number(product.rating) || 0,
+                        reviews: Number(product.reviews) || 0,
+                        stockAvailable: Boolean(product.stock_quantity > 0 || true),
+                        stock_quantity: Number(product.stock_quantity) || 0,
+                        brand: String(product.brand || ''),
+                        target_animal: String(product.target_animal || ''),
+                        ingredients: String(product.ingredients || ''),
+                        dosage_amount: String(product.dosage_amount || ''),
+                        dosage_unit: String(product.dosage_unit || ''),
+                        dosage_frequency: String(product.dosage_frequency || ''),
+                        net_weight: String(product.net_weight || ''),
+                        status: String(product.status || 'active')
+                      }));
+                      setAllProducts(transformedProducts);
+                      setDisplayedProducts(transformedProducts.slice(0, productsPerPage));
+                    } else {
+                      // Use fallback data instead of empty array
                       const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
                       setAllProducts(fallbackProducts);
                       setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
-                      
-                      // Only show error if it's not the SupplementImage association error
-                      if (error instanceof Error && !error.message.includes('SupplementImage')) {
-                        setError('Data loading failed');
-                      }
-                    } finally {
-                      setInitialLoading(false);
                     }
-                  };
-                  fetchSupplements();
-                }}
-              >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>पुनः प्रयास करें</Text>
-              </TouchableOpacity>
-            </View>
-          ) : displayedProducts.length > 0 ? (
-            <View style={styles.productsGrid}>
-              {(() => {
-                console.log('📦 About to map displayedProducts, count:', displayedProducts.length);
-                return displayedProducts.map((product, index) => {
-                  console.log(`📦 Mapping product ${index}:`, JSON.stringify(product, null, 2));
-                  return (
-                    <ProductCard 
-                      key={product.id}
-                      product={product}
-                      onPress={() => handleProductPress(product)}
-                    />
-                  );
-                });
-              })()}
-            </View>
-          ) : (
-            <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>
-              <Text style={{ fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 10 }}>
-                कोई उत्पाद नहीं मिला
-              </Text>
-              <Text style={{ fontSize: 14, color: '#999', textAlign: 'center' }}>
-                कृपया बाद में पुनः प्रयास करें या अन्य श्रेणियां देखें
-              </Text>
-            </View>
-          )}
+                  } catch (error) {
+                    console.error('Error fetching supplements:', error);
+                    // Use fallback data on error instead of empty array
+                    const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
+                    setAllProducts(fallbackProducts);
+                    setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
+                    
+                    // Only show error if it's not the SupplementImage association error
+                    if (error instanceof Error && !error.message.includes('SupplementImage')) {
+                      setError('Data loading failed');
+                    }
+                  } finally {
+                    setInitialLoading(false);
+                  }
+                };
+                fetchSupplements();
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>पुनः प्रयास करें</Text>
+            </TouchableOpacity>
+          </View>
+        ) : displayedProducts.length > 0 ? (
+          <View style={styles.productsGrid}>
+            {(() => {
+              console.log('📦 About to map displayedProducts, count:', displayedProducts.length);
+              return displayedProducts.map((product, index) => {
+                console.log(`📦 Mapping product ${index}:`, JSON.stringify(product, null, 2));
+                return (
+                  <ProductCard 
+                    key={product.id}
+                    product={product}
+                    onPress={() => handleProductPress(product)}
+                  />
+                );
+              });
+            })()}
+          </View>
+        ) : (
+          <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>
+            <Text style={{ fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 10 }}>
+              कोई उत्पाद नहीं मिला
+            </Text>
+            <Text style={{ fontSize: 14, color: '#999', textAlign: 'center' }}>
+              कृपया बाद में पुनः प्रयास करें या अन्य श्रेणियां देखें
+            </Text>
+          </View>
+        )}
 
-          {renderFooter()}
-        </ScrollView>
+        {renderFooter()}
+      </ScrollView>
     </View>
   );
 };

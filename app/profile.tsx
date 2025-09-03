@@ -18,6 +18,15 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { user, logout } = useAuth();
 
+  const stats = (user as any)?.stats || {} as any;
+  const locationText = (user?.city || user?.state) ? `${user?.city || ''} ${user?.state || ''}`.trim() : (user?.address || '—');
+  const animalsListed = stats.animalsListed ?? 0;
+  const callsMade = stats.callsMade ?? 0;
+  const monthsConnected = stats.monthsConnected ?? 0;
+  const coins = stats.coins ?? 0;
+  const completionPercent = typeof stats.completionPercent === 'number' ? stats.completionPercent : 0;
+  const incompletePercent = Math.max(0, 100 - completionPercent);
+
   const handleLogout = () => {
     Alert.alert(
       'लॉगआउट',
@@ -75,7 +84,7 @@ const ProfileScreen = () => {
                 </Text>
               </View>
               <View style={styles.completionBadge}>
-                <Text style={styles.completionText}>67% अधूरी</Text>
+                <Text style={styles.completionText}>{incompletePercent}% अधूरी</Text>
               </View>
             </View>
             
@@ -85,7 +94,7 @@ const ProfileScreen = () => {
               <View style={styles.locationRow}>
                 <Icon name="map-marker" size={18} color="#666" />
                 <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">
-                  GAUTAMBUDDHA NAGAR Uttar ...
+                  {locationText}
                 </Text>
               </View>
               
@@ -106,7 +115,10 @@ const ProfileScreen = () => {
               </View>
             </View>
             
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => router.push('/edit-profile')}
+            >
               <FeatherIcon name="edit-2" size={20} color="#D32F2F" />
             </TouchableOpacity>
           </View>
@@ -119,19 +131,19 @@ const ProfileScreen = () => {
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Icon name="cow" size={24} color="#D32F2F" />
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{animalsListed}</Text>
               <Text style={styles.statLabel}>पशु ऐप पर डाले</Text>
             </View>
             
             <View style={[styles.statItem, styles.statBorder]}>
               <Icon name="phone" size={24} color="#D32F2F" />
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{callsMade}</Text>
               <Text style={styles.statLabel}>आपने कॉल किए</Text>
             </View>
             
             <View style={styles.statItem}>
               <Icon name="calendar-month" size={24} color="#D32F2F" />
-              <Text style={styles.statValue}>1 महीने</Text>
+              <Text style={styles.statValue}>{monthsConnected} महीने</Text>
               <Text style={styles.statLabel}>ऐनिमल से जुड़े</Text>
             </View>
           </View>
@@ -147,7 +159,7 @@ const ProfileScreen = () => {
             
             <View style={styles.completionTextContainer}>
               <Text style={styles.completionTitleText}>
-                आपकी प्रोफाइल <Text style={styles.percentText}>67% अधूरी</Text> है
+                आपकी प्रोफाइल <Text style={styles.percentText}>{incompletePercent}% अधूरी</Text> है
               </Text>
               <Text style={styles.completionDescription}>
                 प्रोफाइल पूरा करें और <Icon name="circle" size={12} color="#FFC107" /> 10 कॉइन्स पाएँ
@@ -170,7 +182,7 @@ const ProfileScreen = () => {
             
             <View style={styles.coinContainer}>
               <Icon name="circle" size={20} color="#FFC107" />
-              <Text style={styles.coinCount}>0</Text>
+              <Text style={styles.coinCount}>{coins}</Text>
             </View>
           </View>
           

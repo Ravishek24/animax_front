@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import CommonHeader from '../../components/CommonHeader';
 
 const { width } = Dimensions.get('window');
 
@@ -53,21 +54,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logo}>
-          <Icon name="cow" size={32} color="white" style={styles.logoIcon} />
-          <Text style={styles.logoText}>Home</Text>
-        </View>
-        <TouchableOpacity 
-          style={styles.userProfile}
-          onPress={() => router.push('/profile')}
-        >
-          <View style={styles.profileImage}>
-            <Text style={styles.profileInitial}>R</Text>
-          </View>
-          <Text style={styles.profileText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      <CommonHeader title="पशुपालन मंच" />
 
       <ScrollView 
         style={styles.scrollView}
@@ -305,58 +292,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ff3b3b',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderColor: '#3a3a3a',
-  },
-  logo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoIcon: {
-    marginRight: 10,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  logoText: {
-    color: 'white',
-    fontSize: 22,
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-    letterSpacing: 1,
-  },
-  userProfile: {
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#ffcc00',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  profileInitial: {
-    color: '#000000',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  profileText: {
-    color: 'white',
-    fontSize: 14,
-  },
+
   
   // Scroll View
   scrollView: {

@@ -9,13 +9,15 @@ import {
   StatusBar,
   FlatList,
   Dimensions,
-  Share
+  Share,
+  Alert
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../components/SafeAreaWrapper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,7 +37,7 @@ const ProductDetailsScreen = () => {
 
   if (!product) {
     return (
-      <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
+      <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
         <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -88,8 +90,64 @@ const ProductDetailsScreen = () => {
     if (quantity > 1) setQuantity(quantity - 1);
   };
 
+  const addToCart = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert('लॉगिन आवश्यक', 'कार्ट में जोड़ने के लिए कृपया लॉगिन करें');
+        return;
+      }
+
+      const response = await fetch('https://api.sociamosaic.com/api/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          supplement_id: product.id,
+          quantity: quantity
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        Alert.alert('सफल', 'कार्ट में जोड़ा गया');
+      } else {
+        Alert.alert('त्रुटि', result.message || 'कार्ट में जोड़ने में समस्या आई');
+      }
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      Alert.alert('त्रुटि', 'कार्ट में जोड़ने में समस्या आई');
+    }
+  };
+
+  const buyNow = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert('लॉगिन आवश्यक', 'खरीदने के लिए कृपया लॉगिन करें');
+        return;
+      }
+
+      // Navigate to checkout page with product details
+      router.push({
+        pathname: '/checkout',
+        params: {
+          product: JSON.stringify(product),
+          quantity: quantity.toString(),
+          totalAmount: (product.price * quantity).toString()
+        }
+      });
+    } catch (error) {
+      console.error('Buy now error:', error);
+      Alert.alert('त्रुटि', 'खरीदने में समस्या आई');
+    }
+  };
+
   return (
-    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
+    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
       <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         {/* Header - Match Marketplace Style */}
@@ -105,32 +163,44 @@ const ProductDetailsScreen = () => {
         <ScrollView style={styles.scrollView}>
           {/* Product Images Carousel */}
           <View style={styles.carouselContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={product.images}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={onSlideChange}
-              keyExtractor={(_, index) => `image_${index}`}
-              renderItem={({ item }) => (
-                <View style={styles.slideItem}>
-                  <View style={styles.imageContainer}>
-                    <Image 
-                      source={item} 
-                      style={styles.productImage}
-                      resizeMode="cover"
-                    />
+            {product.images && product.images.length > 0 ? (
+              <FlatList
+                ref={flatListRef}
+                data={product.images}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={onSlideChange}
+                keyExtractor={(_, index) => `image_${index}`}
+                renderItem={({ item }) => (
+                  <View style={styles.slideItem}>
+                    <View style={styles.imageContainer}>
+                      <Image 
+                        source={item} 
+                        style={styles.productImage}
+                        resizeMode="cover"
+                      />
+                    </View>
                   </View>
+                )}
+              />
+            ) : (
+              <View style={styles.slideItem}>
+                <View style={styles.imageContainer}>
+                  <Image 
+                    source={{ uri: 'https://via.placeholder.com/300x200?text=No+Image' }} 
+                    style={styles.productImage}
+                    resizeMode="cover"
+                  />
                 </View>
-              )}
-            />
+              </View>
+            )}
             {/* Image Pagination Dots */}
-            {product.images.length > 1 && (
+            {product.images && product.images.length > 1 && (
               <View style={styles.paginationContainer}>
                 {product.images.map((_: any, index: number) => (
                   <View
-                    key={`dot_${index}`}
+                    key={index}
                     style={[
                       styles.paginationDot,
                       activeSlide === index ? styles.paginationDotActive : {}
@@ -193,12 +263,16 @@ const ProductDetailsScreen = () => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>विशेषताएँ</Text>
               <View style={styles.featuresList}>
-                {product.features.map((feature: string, index: number) => (
-                  <View key={index} style={styles.featureItem}>
-                    <Icon name="check-circle" size={16} color="#ff3b3b" style={styles.featureIcon} />
-                    <Text style={styles.featureText}>{feature}</Text>
-                  </View>
-                ))}
+                {product.features && product.features.length > 0 ? (
+                  product.features.map((feature: string, index: number) => (
+                    <View key={index} style={styles.featureItem}>
+                      <Icon name="check-circle" size={16} color="#ff3b3b" style={styles.featureIcon} />
+                      <Text style={styles.featureText}>{feature}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.noFeaturesText}>इस उत्पाद के लिए कोई विशेषताएँ उपलब्ध नहीं हैं</Text>
+                )}
               </View>
             </View>
             
@@ -240,6 +314,7 @@ const ProductDetailsScreen = () => {
               !product.stockAvailable && styles.disabledButton
             ]}
             disabled={!product.stockAvailable}
+            onPress={addToCart}
           >
             <Text style={styles.addToCartText}>
               {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
@@ -251,6 +326,7 @@ const ProductDetailsScreen = () => {
               !product.stockAvailable && styles.disabledButton
             ]}
             disabled={!product.stockAvailable}
+            onPress={buyNow}
           >
             <Text style={styles.buyNowText}>अभी खरीदें</Text>
           </TouchableOpacity>
@@ -264,6 +340,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    paddingTop: 0,
   },
   header: {
     flexDirection: 'row',
@@ -290,18 +367,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   carouselContainer: {
-    height: 300,
+    height: 250,
     position: 'relative',
   },
   slideItem: {
     width: width,
-    height: 300,
+    height: 250,
     justifyContent: 'center',
     alignItems: 'center',
   },
   imageContainer: {
     width: width - 40,
-    height: 280,
+    height: 230,
     backgroundColor: '#f9f9f9',
     justifyContent: 'center',
     alignItems: 'center',
@@ -437,6 +514,11 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 14,
     color: '#444',
+  },
+  noFeaturesText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
   shippingInfo: {
     flexDirection: 'row',

@@ -5,349 +5,311 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
-  TextInput,
   Alert,
   ActivityIndicator,
-  Animated,
+  Linking
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import payuService from '../services/payuService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../components/SafeAreaWrapper';
-import { useSelector, useDispatch } from 'react-redux';
-import type { RootState } from './store';
-import type { CartItem } from './slices/cartSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface UserInfo {
-  name: string;
-  phone: string;
-  whatsapp: string;
-  address: string;
+interface CartItem {
+  cart_id: number;
+  supplement_id: number;
+  quantity: number;
+  price_at_time: number;
+  supplement: {
+    supplement_id: number;
+    title: string;
+    price: number;
+    description: string;
+    brand: string;
+    stock_quantity: number;
+    status: string;
+    images?: Array<{
+      image_url: string;
+      is_primary: boolean;
+    }>;
+  };
 }
 
 const CheckoutScreen = () => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const cartItems: CartItem[] = useSelector((state: RootState) => state.cart.items);
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    name: 'Ravishek',
-    phone: '8368099277',
-    whatsapp: '8368099277',
-    address: 'Twin Tower Gym Road, Block C, A-123\nGAUTAMBUDDHA NAGAR, Uttar Pradesh - 201301'
-  });
-  
-  const [orderNotes, setOrderNotes] = useState('');
+  const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
-  const [fadeAnim] = useState(new Animated.Value(0));
+  
+  let cartItems: CartItem[] = [];
+  let totalAmount = 0;
+  let subtotal = 0;
+  let shipping = 50;
+  
+  try {
+    // Check if this is cart checkout or single product checkout
+    if (params.cartItems) {
+      // Cart checkout
+      cartItems = JSON.parse(params.cartItems as string) || [];
+      totalAmount = parseFloat(params.totalAmount as string) || 0;
+      subtotal = parseFloat(params.subtotal as string) || 0;
+      shipping = parseFloat(params.shipping as string) || 50;
+    } else if (params.product) {
+      // Single product checkout
+      const product = JSON.parse(params.product as string);
+      const quantity = parseInt(params.quantity as string) || 1;
+      totalAmount = parseFloat(params.totalAmount as string) || 0;
+      subtotal = totalAmount - 50; // Assuming shipping is 50
+      shipping = 50;
+      
+      // Convert single product to cart format
+      cartItems = [{
+        cart_id: 0,
+        supplement_id: product.supplement_id,
+        quantity: quantity,
+        price_at_time: product.price,
+        supplement: product
+      }];
+    }
+  } catch (e) {
+    console.error('Error parsing checkout data:', e);
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text>No items to checkout.</Text>
+          </View>
+        </SafeAreaView>
+      </SafeAreaWrapper>
+    );
+  }
+
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    // Animate sections on load
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+    loadUserData();
+  }, []);
 
-  // Calculate totals
-  const subtotal = cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
-  const deliveryCharge = subtotal > 500 ? 0 : 50;
-  const discount = subtotal > 1000 ? 100 : 0;
-  const total = subtotal + deliveryCharge - discount;
-
-  const getItemIcon = (itemName: string) => {
-    if (itemName.includes('आहार') || itemName.includes('feed')) {
-      return 'grain';
-    } else if (itemName.includes('दवा') || itemName.includes('medicine')) {
-      return 'medical-bag';
-    } else if (itemName.includes('सप्लीमेंट') || itemName.includes('supplement')) {
-      return 'pill';
-    } else if (itemName.includes('मिनरल') || itemName.includes('mineral')) {
-      return 'cube-outline';
-    }
-    return 'package-variant';
-  };
-
-  const handleChangeAddress = () => {
-    Alert.alert(
-      'पता बदलें',
-      'नया पता जोड़ना चाहते हैं?',
-      [
-        { text: 'रद्द करें', style: 'cancel' },
-        { text: 'नया पता जोड़ें', onPress: () => {
-          // TODO: Implement address management
-          Alert.alert('सूचना', 'पता प्रबंधन जल्द ही उपलब्ध होगा।');
-        }}
-      ]
-    );
-  };
-
-  const handlePlaceOrder = async () => {
-    setLoading(true);
-    
+  const loadUserData = async () => {
     try {
-      const paymentParams = {
-        transactionId: `PLM_${Date.now()}`,
-        amount: total.toString(),
-        productInfo: `पशुपालन मंच - ${cartItems.length} आइटम`,
-        firstName: userInfo.name,
-        email: 'customer@pashupalan.com',
-        phone: userInfo.phone,
-        ios_surl: 'https://pashupalan-manch.com/payment/success',
-        ios_furl: 'https://pashupalan-manch.com/payment/failure',
-        android_surl: 'https://pashupalan-manch.com/payment/success',
-        android_furl: 'https://pashupalan-manch.com/payment/failure',
-      };
-
-      const result = await payuService.initiatePayment(paymentParams);
-      
-      if (result.success) {
-        // Navigate to order confirmation
-        router.push({
-          pathname: '/order-confirmation',
-          params: {
-            orderId: result.data.txnid,
-            amount: total.toString(),
-            items: JSON.stringify(cartItems)
-          }
-        });
+      const userDataString = await AsyncStorage.getItem('userData');
+      if (userDataString) {
+        setUserData(JSON.parse(userDataString));
       }
     } catch (error) {
-      Alert.alert(
-        'भुगतान त्रुटि',
-        'भुगतान में समस्या हुई है। कृपया दोबारा कोशिश करें।',
-        [{ text: 'ठीक है' }]
-      );
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  const handlePayment = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (!token) {
+        Alert.alert('लॉगिन आवश्यक', 'भुगतान के लिए कृपया लॉगिन करें');
+        return;
+      }
+
+      // Handle Cash on Delivery
+      if (selectedPaymentMethod === 'cod') {
+        Alert.alert(
+          'ऑर्डर प्लेस किया गया',
+          'आपका ऑर्डर सफलतापूर्वक प्लेस हो गया है! भुगतान डिलीवरी के समय किया जाएगा।',
+          [
+            {
+              text: 'ठीक है',
+              onPress: () => router.push('/marketplace')
+            }
+          ]
+        );
+        return;
+      }
+
+      // Generate PayU payment hash
+      const productNames = cartItems.map(item => item.supplement.title).join(', ');
+      const paymentData = {
+        key: 'your-payu-merchant-key', // Replace with your actual PayU key
+        salt: 'your-payu-salt', // Replace with your actual PayU salt
+        txnid: `TXN_${Date.now()}`,
+        amount: totalAmount.toString(),
+        productinfo: productNames,
+        firstname: userData?.full_name || 'User',
+        email: userData?.email || 'user@example.com',
+        phone: userData?.phone_number || '',
+        surl: 'https://api.sociamosaic.com/api/payu/success',
+        furl: 'https://api.sociamosaic.com/api/payu/failure',
+        hash: ''
+      };
+
+      // Generate hash
+      const hashString = `${paymentData.key}|${paymentData.txnid}|${paymentData.amount}|${paymentData.productinfo}|${paymentData.firstname}|${paymentData.email}|||||||||||${paymentData.salt}`;
+      
+      const response = await fetch('https://api.sociamosaic.com/api/payu/generate-hash', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          hashString,
+          hashName: 'hash'
+        })
+      });
+
+      const hashResult = await response.json();
+      paymentData.hash = hashResult.hash;
+
+      // Create PayU payment URL
+      const payuUrl = `https://test.payu.in/_payment?${new URLSearchParams(paymentData).toString()}`;
+      
+      // Open PayU payment page
+      const supported = await Linking.canOpenURL(payuUrl);
+      if (supported) {
+        await Linking.openURL(payuUrl);
+      } else {
+        Alert.alert('त्रुटि', 'PayU भुगतान पेज खोलने में समस्या आई');
+      }
+
+    } catch (error) {
+      console.error('Payment error:', error);
+      Alert.alert('त्रुटि', 'भुगतान में समस्या आई');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaWrapper
-      backgroundColor="#f5f5f5"
-      topBackgroundColor="#E8E8E8"
-      bottomBackgroundColor="#000000"
-    >
-      <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
             <Icon name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>चेकआउट</Text>
-        </View>
-        <View style={styles.stepIndicator}>
-          <Text style={styles.stepText}>चरण 1/2</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Cart Summary */}
-        <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <View style={styles.sectionHeader}>
-            <Icon name="shopping" size={20} color="#ff3b3b" />
-            <Text style={styles.sectionTitle}>आपका ऑर्डर</Text>
-          </View>
-          
-          {cartItems.map((item: CartItem, index: number) => (
-            <View key={item.id} style={styles.cartItem}>
-              <View style={styles.itemIcon}>
-                <Icon name={getItemIcon(item.name)} size={24} color="white" />
-              </View>
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemQuantity}>मात्रा: {item.quantity}</Text>
-              </View>
-              <Text style={styles.itemPrice}>₹{item.price * item.quantity}</Text>
-            </View>
-          ))}
-        </Animated.View>
-
-        {/* Delivery Address */}
-        <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <View style={styles.sectionHeader}>
-            <Icon name="map-marker" size={20} color="#ff3b3b" />
-            <Text style={styles.sectionTitle}>डिलीवरी पता</Text>
-            <TouchableOpacity style={styles.changeButton} onPress={handleChangeAddress}>
-              <Text style={styles.changeButtonText}>बदलें</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.addressCard}>
-            <Text style={styles.addressName}>{userInfo.name}</Text>
-            <Text style={styles.addressText}>{userInfo.address}</Text>
-          </View>
-        </Animated.View>
-
-        {/* Contact Info */}
-        <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <View style={styles.sectionHeader}>
-            <Icon name="phone" size={20} color="#ff3b3b" />
-            <Text style={styles.sectionTitle}>संपर्क जानकारी</Text>
-          </View>
-          
-          <View style={styles.contactItem}>
-            <View style={styles.contactIcon}>
-              <Icon name="phone" size={16} color="white" />
-            </View>
-            <Text style={styles.contactText}>फोन: {userInfo.phone}</Text>
-          </View>
-          
-          <View style={styles.contactItem}>
-            <View style={styles.contactIcon}>
-              <Icon name="whatsapp" size={16} color="white" />
-            </View>
-            <Text style={styles.contactText}>WhatsApp: {userInfo.whatsapp}</Text>
-          </View>
-        </Animated.View>
-
-        {/* Price Breakdown */}
-        <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <View style={styles.sectionHeader}>
-            <Icon name="receipt" size={20} color="#ff3b3b" />
-            <Text style={styles.sectionTitle}>मूल्य विवरण</Text>
-          </View>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>उत्पाद मूल्य ({cartItems.length} आइटम)</Text>
-            <Text style={styles.priceValue}>₹{subtotal}</Text>
-          </View>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>डिलीवरी चार्ज</Text>
-            <Text style={styles.priceValue}>₹{deliveryCharge}</Text>
-          </View>
-          
-          {discount > 0 && (
-            <View style={styles.priceRow}>
-              <Text style={[styles.priceLabel, styles.discountText]}>छूट</Text>
-              <Text style={[styles.priceValue, styles.discountText]}>-₹{discount}</Text>
-            </View>
-          )}
-          
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>कुल राशि</Text>
-            <Text style={styles.totalValue}>₹{total}</Text>
-          </View>
-        </Animated.View>
-
-        {/* Payment Method */}
-        <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <View style={styles.sectionHeader}>
-            <Icon name="credit-card" size={20} color="#ff3b3b" />
-            <Text style={styles.sectionTitle}>भुगतान विधि</Text>
-          </View>
-          
-          <View style={styles.paymentMethod}>
-            <View style={styles.paymentIcon}>
-              <Icon name="credit-card" size={20} color="white" />
-            </View>
-            <View style={styles.paymentInfo}>
-              <Text style={styles.paymentName}>PayU Gateway</Text>
-              <Text style={styles.paymentDesc}>क्रेडिट कार्ड, डेबिट कार्ड, UPI, नेट बैंकिंग</Text>
-            </View>
-            <Icon name="shield-check" size={20} color="#4caf50" />
-          </View>
-        </Animated.View>
-
-        {/* Order Notes */}
-        <Animated.View style={[styles.section, { opacity: fadeAnim }]}>
-          <View style={styles.sectionHeader}>
-            <Icon name="note-text" size={20} color="#ff3b3b" />
-            <Text style={styles.sectionTitle}>विशेष निर्देश (वैकल्पिक)</Text>
-          </View>
-          
-          <TextInput
-            style={styles.notesInput}
-            placeholder="डिलीवरी के लिए कोई विशेष निर्देश..."
-            value={orderNotes}
-            onChangeText={setOrderNotes}
-            multiline
-            maxLength={200}
-            textAlignVertical="top"
-          />
-        </Animated.View>
-
-        {/* Bottom spacer */}
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
-
-      {/* Bottom Action Bar */}
-      <View style={styles.bottomAction}>
-        <View style={styles.totalRow}>
-          <Text style={styles.bottomTotalLabel}>कुल भुगतान:</Text>
-          <Text style={styles.bottomTotalValue}>₹{total}</Text>
+          <View style={{ width: 24 }} />
         </View>
         
-        <TouchableOpacity
-          style={[styles.placeOrderButton, loading && styles.disabledButton]}
-          onPress={handlePlaceOrder}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <ActivityIndicator size="small" color="white" />
-              <Text style={styles.placeOrderText}>भुगतान प्रक्रिया...</Text>
-            </>
-          ) : (
-            <>
-              <Icon name="lock" size={20} color="white" />
-              <Text style={styles.placeOrderText}>सुरक्षित भुगतान करें</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+        <ScrollView style={styles.scrollView}>
+          {/* Order Summary */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>ऑर्डर सारांश</Text>
+            {cartItems.map((item: CartItem, index: number) => (
+              <View key={index} style={styles.productCard}>
+                <Text style={styles.productName}>{item.supplement.title}</Text>
+                <Text style={styles.productPrice}>₹{parseFloat(item.price_at_time.toString()).toFixed(2)}</Text>
+                <Text style={styles.quantityText}>मात्रा: {item.quantity}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Price Breakdown */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>मूल्य विवरण</Text>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>उप-कुल</Text>
+              <Text style={styles.priceValue}>₹{subtotal.toFixed(2)}</Text>
+            </View>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>शिपिंग</Text>
+              <Text style={styles.priceValue}>₹{shipping.toFixed(2)}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.priceRow}>
+              <Text style={styles.totalLabel}>कुल राशि</Text>
+              <Text style={styles.totalValue}>₹{totalAmount.toFixed(2)}</Text>
+            </View>
+          </View>
+
+          {/* Payment Methods */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>भुगतान विधि</Text>
+            <TouchableOpacity 
+              style={[styles.paymentMethod, selectedPaymentMethod === 'card' && styles.selectedPaymentMethod]}
+              onPress={() => setSelectedPaymentMethod('card')}
+            >
+              <Icon name="credit-card" size={24} color={selectedPaymentMethod === 'card' ? '#ff3b3b' : '#333'} />
+              <Text style={[styles.paymentText, selectedPaymentMethod === 'card' && styles.selectedPaymentText]}>
+                क्रेडिट/डेबिट कार्ड (PayU)
+              </Text>
+              {selectedPaymentMethod === 'card' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.paymentMethod, selectedPaymentMethod === 'upi' && styles.selectedPaymentMethod]}
+              onPress={() => setSelectedPaymentMethod('upi')}
+            >
+              <Icon name="bank" size={24} color={selectedPaymentMethod === 'upi' ? '#ff3b3b' : '#333'} />
+              <Text style={[styles.paymentText, selectedPaymentMethod === 'upi' && styles.selectedPaymentText]}>
+                UPI (PayU)
+              </Text>
+              {selectedPaymentMethod === 'upi' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.paymentMethod, selectedPaymentMethod === 'netbanking' && styles.selectedPaymentMethod]}
+              onPress={() => setSelectedPaymentMethod('netbanking')}
+            >
+              <Icon name="bank-transfer" size={24} color={selectedPaymentMethod === 'netbanking' ? '#ff3b3b' : '#333'} />
+              <Text style={[styles.paymentText, selectedPaymentMethod === 'netbanking' && styles.selectedPaymentText]}>
+                नेट बैंकिंग (PayU)
+              </Text>
+              {selectedPaymentMethod === 'netbanking' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.paymentMethod, selectedPaymentMethod === 'cod' && styles.selectedPaymentMethod]}
+              onPress={() => setSelectedPaymentMethod('cod')}
+            >
+              <Icon name="cash" size={24} color={selectedPaymentMethod === 'cod' ? '#ff3b3b' : '#333'} />
+              <Text style={[styles.paymentText, selectedPaymentMethod === 'cod' && styles.selectedPaymentText]}>
+                कैश ऑन डिलीवरी
+              </Text>
+              {selectedPaymentMethod === 'cod' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+        
+        {/* Payment Button */}
+        <View style={styles.bottomBar}>
+          <TouchableOpacity 
+            style={[styles.payButton, loading && styles.disabledButton]}
+            onPress={handlePayment}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.payButtonText}>
+                ₹{totalAmount + 50} का भुगतान करें
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     </SafeAreaWrapper>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    paddingTop: 0,
+  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#ff3b3b',
     paddingHorizontal: 16,
-    paddingVertical: 15,
-    elevation: 4,
-    shadowColor: '#ff3b3b',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    marginRight: 12,
+    paddingVertical: 12,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  stepIndicator: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  stepText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
@@ -355,116 +317,46 @@ const styles = StyleSheet.create({
   section: {
     backgroundColor: 'white',
     margin: 16,
-    borderRadius: 12,
     padding: 16,
-    elevation: 2,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ff3b3b',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff3b3b',
-    marginLeft: 8,
-    flex: 1,
-  },
-  changeButton: {
-    borderWidth: 1,
-    borderColor: '#ff3b3b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  changeButtonText: {
-    color: '#ff3b3b',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  cartItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  itemIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    backgroundColor: '#ff3b3b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  itemDetails: {
-    flex: 1,
-  },
-  itemName: {
-    fontSize: 14,
-    fontWeight: '600',
     color: '#333',
-    marginBottom: 4,
+    marginBottom: 16,
   },
-  itemQuantity: {
-    fontSize: 12,
-    color: '#666',
-  },
-  itemPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#ff3b3b',
-  },
-  addressCard: {
-    backgroundColor: '#fff8f8',
+  productCard: {
     padding: 12,
+    backgroundColor: '#f8f9fa',
     borderRadius: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#ffcc00',
   },
-  addressName: {
+  productName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 4,
   },
-  addressText: {
+  productPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ff3b3b',
+    marginBottom: 4,
+  },
+  quantityText: {
     fontSize: 14,
     color: '#666',
-    lineHeight: 20,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  contactIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#ff3b3b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  contactText: {
-    fontSize: 14,
-    color: '#333',
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   priceLabel: {
     fontSize: 14,
@@ -474,17 +366,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     fontWeight: '500',
-  },
-  discountText: {
-    color: '#4caf50',
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    marginTop: 8,
-    borderTopWidth: 2,
-    borderTopColor: '#ff3b3b',
   },
   totalLabel: {
     fontSize: 16,
@@ -496,94 +377,52 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ff3b3b',
   },
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 12,
+  },
   paymentMethod: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff8f8',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#ffcc00',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  paymentIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#ff3b3b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+  selectedPaymentMethod: {
+    backgroundColor: '#fff5f5',
+    borderLeftWidth: 3,
+    borderLeftColor: '#ff3b3b',
   },
-  paymentInfo: {
+  paymentText: {
     flex: 1,
-  },
-  paymentName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  paymentDesc: {
-    fontSize: 12,
-    color: '#666',
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 80,
-    fontSize: 14,
-    color: '#333',
-    textAlignVertical: 'top',
-  },
-  bottomSpacer: {
-    height: 100,
-  },
-  bottomAction: {
-    backgroundColor: 'white',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  bottomTotalLabel: {
     fontSize: 16,
-    color: '#666',
+    color: '#333',
+    marginLeft: 12,
   },
-  bottomTotalValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  selectedPaymentText: {
     color: '#ff3b3b',
+    fontWeight: '600',
   },
-  placeOrderButton: {
+  bottomBar: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  payButton: {
     backgroundColor: '#ff3b3b',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingVertical: 16,
     borderRadius: 12,
-    marginTop: 12,
-    elevation: 4,
-    shadowColor: '#ff3b3b',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    alignItems: 'center',
   },
-  disabledButton: {
-    backgroundColor: '#ccc',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  placeOrderText: {
+  payButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 8,
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
   },
 });
 

@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../components/SafeAreaWrapper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import NutriDietBanner from '../assets/NutriDiet (2).png';
 
 const { width } = Dimensions.get('window');
@@ -157,45 +158,69 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
   const [addingToCart, setAddingToCart] = useState(false);
   
   const handleAddToCart = async (product: Product) => {
-    setAddingToCart(true);
-    
-    // Add item to cart
-    const cartItem: CartItem = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-    };
-    
-    // Simulate adding to cart
-    setTimeout(() => {
-      setCartItems(prev => {
-        const existingItem = prev.find(item => item.id === product.id);
-        if (existingItem) {
-          return prev.map(item => 
-            item.id === product.id 
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          );
-        } else {
-          return [...prev, cartItem];
-        }
-      });
-      setAddingToCart(false);
+    try {
+      setAddingToCart(true);
       
-      // Show success message
-      Alert.alert(
-        'कार्ट में जोड़ा गया',
-        `${product.name} आपके कार्ट में जोड़ दिया गया है।`,
-        [
-          { text: 'खरीदारी जारी रखें', style: 'cancel' },
-          { 
-            text: 'चेकआउट करें', 
-            onPress: () => navigateToCheckout([cartItem])
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert('लॉगिन आवश्यक', 'कार्ट में जोड़ने के लिए कृपया लॉगिन करें');
+        return;
+      }
+
+      const response = await fetch('https://api.sociamosaic.com/api/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          supplement_id: parseInt(product.id),
+          quantity: 1
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local cart count
+        setCartItems(prev => {
+          const existingItem = prev.find(item => item.id === product.id);
+          if (existingItem) {
+            return prev.map(item => 
+              item.id === product.id 
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+            );
+          } else {
+            return [...prev, {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              quantity: 1,
+            }];
           }
-        ]
-      );
-    }, 1000);
+        });
+        
+        Alert.alert(
+          'कार्ट में जोड़ा गया',
+          `${product.name} आपके कार्ट में जोड़ दिया गया है।`,
+          [
+            { text: 'खरीदारी जारी रखें', style: 'cancel' },
+            { 
+              text: 'कार्ट देखें', 
+              onPress: () => router.push('/cart')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('त्रुटि', result.message || 'कार्ट में जोड़ने में समस्या आई');
+      }
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      Alert.alert('त्रुटि', 'कार्ट में जोड़ने में समस्या आई');
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const navigateToCheckout = (items: CartItem[]) => {
@@ -283,7 +308,7 @@ const CartIcon = ({ cartItems, router }: { cartItems: CartItem[], router: any })
   return (
     <TouchableOpacity 
       style={styles.cartIconContainer}
-      onPress={() => router.push(`/cart?cartData=${encodeURIComponent(JSON.stringify(cartItems))}`)}
+      onPress={() => router.push('/cart')}
     >
       <Icon name="cart-outline" size={28} color="white" />
       {itemCount > 0 && (
@@ -308,7 +333,36 @@ const MarketplaceScreen = () => {
 
   useEffect(() => {
     loadInitialProducts();
+    loadCartCount();
   }, []);
+
+  const loadCartCount = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch('https://api.sociamosaic.com/api/cart', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        const backendCartItems = result.data.map((item: any) => ({
+          id: item.supplement_id.toString(),
+          name: item.Supplement.title,
+          price: item.price_at_time,
+          quantity: item.quantity,
+        }));
+        setCartItems(backendCartItems);
+      }
+    } catch (error) {
+      console.error('Error loading cart count:', error);
+    }
+  };
 
   const loadInitialProducts = () => {
     setDisplayedProducts(allProducts.slice(0, productsPerPage));

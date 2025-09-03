@@ -7,6 +7,21 @@ interface User {
   user_id: number;
   full_name: string;
   phone_number: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  latitude?: number;
+  longitude?: number;
+  registration_date?: string;
+  role?: string;
+  stats?: {
+    animalsListed: number;
+    callsMade: number;
+    monthsConnected: number;
+    coins: number;
+    completionPercent: number;
+  };
 }
 
 interface AuthContextType {
@@ -47,8 +62,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Verify token with backend
         try {
           const data = await apiService.getProfile();
-          setUser(data.user);
-          setToken(storedToken);
+          if (data.success && data.user) {
+            setUser(data.user);
+            setToken(storedToken);
+          } else {
+            throw new Error('Invalid profile data');
+          }
         } catch (error) {
           // Token is invalid, clear storage
           await AsyncStorage.multiRemove(['userToken', 'userData']);
