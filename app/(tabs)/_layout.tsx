@@ -12,7 +12,7 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: '#ff3b3b',
+            backgroundColor: '#990906',
             borderTopWidth: 0,
             height: Platform.OS === 'ios' ? 85 : 60,
             paddingBottom: Platform.OS === 'ios' ? 25 : 5,
@@ -21,10 +21,14 @@ export default function TabLayout() {
             borderRightWidth: 2,
             borderColor: '#3a3a3a',
           },
-          tabBarActiveTintColor: '#ffcc00',
+          // Ensure all tab items share equal width
+          tabBarItemStyle: {
+            flex: 1,
+          },
+          tabBarActiveTintColor: '#f9ca1b',
           tabBarInactiveTintColor: 'white',
           tabBarLabelStyle: {
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: '500',
             marginBottom: Platform.OS === 'ios' ? 0 : 5,
           },

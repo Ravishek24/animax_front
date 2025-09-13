@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import SafeAreaWrapper from '../components/SafeAreaWrapper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -261,30 +260,27 @@ const CartScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
+      <View style={styles.container}>
         <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
-        <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Icon name="arrow-left" size={24} color="white" />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>कार्ट</Text>
-            </View>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Icon name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>कार्ट</Text>
           </View>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#ff3b3b" />
-            <Text style={styles.loadingText}>कार्ट लोड हो रहा है...</Text>
-          </View>
-        </SafeAreaView>
-      </SafeAreaWrapper>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#990906" />
+          <Text style={styles.loadingText}>कार्ट लोड हो रहा है...</Text>
+        </View>
+      </View>
     );
   }
 
   return (
-    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
+    <View style={styles.container}>
       <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
-      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -366,7 +362,7 @@ const CartScreen = () => {
                       onPress={() => removeItem(item.cart_id)}
                       disabled={updating}
                     >
-                      <Icon name="delete" size={20} color="#ff3b3b" />
+                      <Icon name="delete" size={20} color="#990906" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -412,8 +408,7 @@ const CartScreen = () => {
             </TouchableOpacity>
         </View>
         )}
-      </SafeAreaView>
-    </SafeAreaWrapper>
+    </View>
   );
 };
 
@@ -427,7 +422,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -477,7 +472,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   shopButton: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 25,
@@ -521,7 +516,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
     marginBottom: 8,
   },
   quantityContainer: {

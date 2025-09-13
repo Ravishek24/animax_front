@@ -126,7 +126,7 @@ const AnimalSellScreen = () => {
           <Text style={styles.formTitle}>पशु बेचें</Text>
           <TouchableOpacity style={styles.myAnimalsButton}>
             <Text style={styles.myAnimalsText}>मेरे पशु</Text>
-            <Icon name="chevron-right" size={20} color="#D32F2F" />
+            <Icon name="chevron-right" size={20} color="#990906" />
           </TouchableOpacity>
         </View>
 
@@ -139,7 +139,7 @@ const AnimalSellScreen = () => {
           </View>
           <TouchableOpacity style={styles.dropdown}>
             <Text style={styles.dropdownText}>पशु चुने</Text>
-            <Icon name="chevron-down" size={24} color="#D32F2F" />
+            <Icon name="chevron-down" size={24} color="#990906" />
           </TouchableOpacity>
         </View>
 
@@ -240,13 +240,13 @@ const AnimalSellScreen = () => {
           {/* More info button */}
           <TouchableOpacity style={styles.moreInfoButton}>
             <Text style={styles.moreInfoText}>और जानकारी डालें</Text>
-            <Icon name="chevron-down" size={24} color="#D32F2F" />
+            <Icon name="chevron-down" size={24} color="#990906" />
           </TouchableOpacity>
 
           {/* Negotiable toggle */}
           <View style={styles.negotiableSection}>
             <View style={styles.negotiableContent}>
-              <Icon name="handshake" size={24} color="#D32F2F" />
+              <Icon name="handshake" size={24} color="#990906" />
               <View style={styles.negotiableTextContainer}>
                 <Text style={styles.negotiableTitle}>मोल भाव</Text>
                 <Text style={styles.negotiableSubtitle}>पशु के रेट पे खरीदार से मोल भाव</Text>
@@ -255,7 +255,7 @@ const AnimalSellScreen = () => {
               <Switch
                 value={negotiable}
                 onValueChange={setNegotiable}
-                trackColor={{ false: '#767577', true: '#D32F2F' }}
+                trackColor={{ false: '#767577', true: '#990906' }}
                 thumbColor={negotiable ? '#fff' : '#f4f3f4'}
               />
             </View>
@@ -303,15 +303,15 @@ const AnimalSellScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Icon name="arrow-left" size={24} color="#D32F2F" />
+            <Icon name="arrow-left" size={24} color="#990906" />
           </TouchableOpacity>
           <View style={styles.headerLeft}>
-            <Icon name="cow" size={24} color="#D32F2F" />
+            <Icon name="cow" size={24} color="#990906" />
             <Text style={styles.headerTitle}>पशुपालन मंच</Text>
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.walletButton} onPress={() => router.push('/wallet' as any)}>
-              <Icon name="circle" size={14} color="#FFC107" />
+              <Icon name="circle" size={14} color="#f9ca1b" />
               <Icon name="wallet" size={24} color="#D32F2F" />
               <Text style={styles.headerButtonText}>वॉलेट</Text>
             </TouchableOpacity>
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: '#D32F2F',
+    color: '#990906',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   uploadButtonText: {
-    color: '#D32F2F',
+    color: '#990906',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoButtonText: {
-    color: '#D32F2F',
+    color: '#990906',
     fontWeight: 'bold',
   },
   locationSection: {

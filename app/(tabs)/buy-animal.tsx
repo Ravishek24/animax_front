@@ -549,7 +549,7 @@ const BuyAnimalsScreen = () => {
 
         {loading && !refreshing ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#ff3b3b" />
+            <ActivityIndicator size="large" color="#990906" />
             <Text style={styles.loadingText}>पशु लोड हो रहे हैं...</Text>
           </View>
         ) : (
@@ -565,8 +565,8 @@ const BuyAnimalsScreen = () => {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                colors={['#ff3b3b']}
-                tintColor="#ff3b3b"
+                colors={['#990906']}
+                tintColor="#990906"
               />
             }
             ListEmptyComponent={
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   nearbyButtonActive: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
   },
   nearbyText: {
     marginLeft: 4,
@@ -674,8 +674,8 @@ const styles = StyleSheet.create({
     minHeight: 36,
   },
   selectedCategory: {
-    backgroundColor: '#ff3b3b',
-    borderColor: '#ff3b3b',
+    backgroundColor: '#990906',
+    borderColor: '#990906',
   },
   categoryEmoji: {
     fontSize: 16,
@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
   animalPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
   },
   animalDetails: {
     paddingHorizontal: 16,

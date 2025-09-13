@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     borderLeftWidth: 4,
-    borderLeftColor: '#ffcc00',
+    borderLeftColor: '#f9ca1b',
   },
   orderItem: {
     flexDirection: 'row',
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: '#ffcc00',
+    backgroundColor: '#f9ca1b',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,

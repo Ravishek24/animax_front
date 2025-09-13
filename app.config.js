@@ -2,13 +2,13 @@ export default {
   expo: {
     name: "Animal Marketplace",
     slug: "animal-marketplace",
+    scheme: "animalmarketplace", // Unique scheme to avoid conflicts
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
-    scheme: "myapp",
-    userInterfaceStyle: "automatic",
+    icon: "./assets/icon.png",
+    userInterfaceStyle: "light",
     splash: {
-      image: "./assets/images/splash.png",
+      image: "./assets/splash.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -16,27 +16,23 @@ export default {
       "**/*"
     ],
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      bundleIdentifier: "com.animalmarketplace.app" // Unique iOS bundle ID
     },
     android: {
+      package: "com.animalmarketplace.app", // Unique Android package name
       adaptiveIcon: {
-        foregroundImage: "./assets/images/adaptive-icon.png",
-        backgroundColor: "#ffffff"
-      }
+        foregroundImage: "./assets/adaptive-icon.png",
+        backgroundColor: "#FFFFFF"
+      },
+      // Remove conflicting intent filters - let payment apps handle their own URLs
+      // We don't want our app to intercept payment URLs
     },
     web: {
-      bundler: "metro",
-      output: "static",
-      favicon: "./assets/images/favicon.png"
+      favicon: "./assets/favicon.png"
     },
     plugins: [
       "expo-router"
-    ],
-    experiments: {
-      typedRoutes: true
-    },
-    extra: {
-      EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL || "https://api.sociamosaic.com"
-    }
+    ]
   }
-}; 
+};

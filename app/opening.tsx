@@ -75,7 +75,7 @@ const OpeningScreen = () => {
             },
           ]}
         >
-          <Icon name="cow" size={80} color="#ff3b3b" style={styles.logoIcon} />
+          <Icon name="cow" size={80} color="#990906" style={styles.logoIcon} />
           <View style={styles.logoTextContainer}>
             <Text style={styles.logoText}>पशुपालन</Text>
             <Text style={styles.logoSubtext}>मंच</Text>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     marginHorizontal: 4,
   },
   dot1: {

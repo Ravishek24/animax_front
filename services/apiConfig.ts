@@ -31,4 +31,8 @@ export const API_ENDPOINTS = {
     LIST: '/api/supplements',
     DETAILS: '/api/supplements/:id',
   }
+  ,
+  VIDEOS: {
+    LIST: '/api/videos'
+  }
 }; 

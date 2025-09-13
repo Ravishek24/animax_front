@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButton: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#990906',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   },
   saveButtonLarge: {
     flex: 2,
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#990906',
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',

@@ -231,11 +231,11 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
     for (let i = 1; i <= 5; i++) {
       if (i <= rating) {
         stars.push(
-          <FontAwesome key={i} name="star" size={12} color="#ffbb00" />
+          <FontAwesome key={i} name="star" size={12} color="#f9ca1b" />
         );
       } else {
         stars.push(
-          <FontAwesome key={i} name="star-o" size={12} color="#ffbb00" />
+          <FontAwesome key={i} name="star-o" size={12} color="#f9ca1b" />
         );
       }
     }
@@ -425,14 +425,14 @@ const MarketplaceScreen = () => {
             position: 'absolute',
             top: -4,
             right: -8,
-            backgroundColor: '#ffcc00',
+            backgroundColor: '#f9ca1b',
             borderRadius: 10,
             paddingHorizontal: 5,
             minWidth: 18,
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <Text style={{ color: '#ff3b3b', fontWeight: 'bold', fontSize: 12 }}>
+            <Text style={{ color: '#990906', fontWeight: 'bold', fontSize: 12 }}>
               {itemCount}
             </Text>
           </View>
@@ -448,7 +448,7 @@ const MarketplaceScreen = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: '#ff3b3b' }]}>
+      <View style={[styles.header, { backgroundColor: '#990906' }]}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -510,17 +510,17 @@ const MarketplaceScreen = () => {
         {/* Products Grid */}
         {initialLoading ? (
           <View style={{ alignItems: 'center', marginTop: 40 }}>
-            <ActivityIndicator size="large" color="#D32F2F" />
+            <ActivityIndicator size="large" color="#990906" />
             <Text style={{ marginTop: 10 }}>लोड हो रहा है...</Text>
           </View>
         ) : error ? (
           <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>
-            <Text style={{ fontSize: 16, color: '#D32F2F', textAlign: 'center', marginBottom: 10 }}>
+            <Text style={{ fontSize: 16, color: '#990906', textAlign: 'center', marginBottom: 10 }}>
               {error}
             </Text>
             <TouchableOpacity 
               style={{ 
-                backgroundColor: '#D32F2F', 
+                backgroundColor: '#990906', 
                 paddingHorizontal: 20, 
                 paddingVertical: 10, 
                 borderRadius: 20 
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingHorizontal: 16,
     paddingVertical: 15,
     borderLeftWidth: 2,
@@ -703,8 +703,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   activeCategory: {
-    backgroundColor: '#ff3b3b',
-    borderColor: '#ff3b3b',
+    backgroundColor: '#990906',
+    borderColor: '#990906',
   },
   categoryText: {
     fontSize: 14,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
   },
   paginationDotActive: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     width: 10,
     height: 10,
     borderRadius: 5,
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#ff3b3b',
+    color: '#990906',
     marginBottom: 8,
   },
   productRating: {
@@ -833,7 +833,7 @@ const styles = StyleSheet.create({
     color: '#777',
   },
   addToCartButton: {
-    backgroundColor: '#ffcc00',
+    backgroundColor: '#f9ca1b',
     paddingVertical: 8,
     borderRadius: 20,
     alignItems: 'center',

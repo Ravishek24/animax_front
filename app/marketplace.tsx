@@ -398,7 +398,7 @@ const MarketplaceScreen = () => {
     if (!loading) return null;
     return (
       <View style={styles.loadingFooter}>
-        <ActivityIndicator size="small" color="#D32F2F" />
+        <ActivityIndicator size="small" color="#990906" />
         <Text style={styles.loadingText}>लोड हो रहा है...</Text>
       </View>
     );
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#ff3b3b',
+    color: '#990906',
     marginBottom: 8,
   },
   productRating: {
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
     color: '#777',
   },
   addToCartButton: {
-    backgroundColor: '#ffcc00',
+    backgroundColor: '#f9ca1b',
     paddingVertical: 8,
     borderRadius: 20,
     alignItems: 'center',
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    backgroundColor: '#ffcc00',
+    backgroundColor: '#f9ca1b',
     borderRadius: 10,
     minWidth: 20,
     height: 20,

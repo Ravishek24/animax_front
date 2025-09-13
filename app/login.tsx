@@ -89,7 +89,7 @@ const LoginScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Icon name="account-circle" size={64} color="#ff3b3b" style={{ marginBottom: 12 }} />
+        <Icon name="account-circle" size={64} color="#990906" style={{ marginBottom: 12 }} />
         <Text style={styles.title}>{otpSent ? 'OTP सत्यापन' : 'लॉगिन करें'}</Text>
         <Text style={styles.subtitle}>
           {otpSent 
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
     marginBottom: 8,
   },
   subtitle: {
@@ -229,12 +229,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   resendText: {
-    color: '#ff3b3b',
+    color: '#990906',
     fontSize: 14,
     textDecorationLine: 'underline',
   },
   button: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingVertical: 14,
     borderRadius: 8,
     width: '100%',
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   error: {
-    color: '#d32f2f',
+    color: '#990906',
     marginBottom: 8,
     alignSelf: 'flex-start',
   },

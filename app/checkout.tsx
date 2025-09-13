@@ -6,13 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
-  Linking
+  ActivityIndicator
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SafeAreaWrapper from '../components/SafeAreaWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface CartItem {
@@ -76,13 +74,11 @@ const CheckoutScreen = () => {
 
   if (cartItems.length === 0) {
     return (
-      <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#000">
-        <SafeAreaView style={styles.container} edges={['left', 'right']}>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>No items to checkout.</Text>
-          </View>
-        </SafeAreaView>
-      </SafeAreaWrapper>
+      <View style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>No items to checkout.</Text>
+        </View>
+      </View>
     );
   }
 
@@ -114,64 +110,51 @@ const CheckoutScreen = () => {
         return;
       }
 
-      // Handle Cash on Delivery
-      if (selectedPaymentMethod === 'cod') {
-        Alert.alert(
-          'ऑर्डर प्लेस किया गया',
-          'आपका ऑर्डर सफलतापूर्वक प्लेस हो गया है! भुगतान डिलीवरी के समय किया जाएगा।',
-          [
-            {
-              text: 'ठीक है',
-              onPress: () => router.push('/marketplace')
-            }
-          ]
-        );
-        return;
-      }
 
-      // Generate PayU payment hash
+      // Prepare payment data
       const productNames = cartItems.map(item => item.supplement.title).join(', ');
       const paymentData = {
-        key: 'your-payu-merchant-key', // Replace with your actual PayU key
-        salt: 'your-payu-salt', // Replace with your actual PayU salt
-        txnid: `TXN_${Date.now()}`,
         amount: totalAmount.toString(),
-        productinfo: productNames,
-        firstname: userData?.full_name || 'User',
-        email: userData?.email || 'user@example.com',
-        phone: userData?.phone_number || '',
-        surl: 'https://api.sociamosaic.com/api/payu/success',
-        furl: 'https://api.sociamosaic.com/api/payu/failure',
-        hash: ''
+        productInfo: productNames,
+        userInfo: {
+          firstName: userData?.full_name || 'User',
+          email: userData?.email || 'user@example.com',
+          phone: userData?.phone_number || ''
+        },
+        cartItems: cartItems // Send cart items for order creation
       };
 
-      // Generate hash
-      const hashString = `${paymentData.key}|${paymentData.txnid}|${paymentData.amount}|${paymentData.productinfo}|${paymentData.firstname}|${paymentData.email}|||||||||||${paymentData.salt}`;
-      
-      const response = await fetch('https://api.sociamosaic.com/api/payu/generate-hash', {
+      // Send payment request to backend
+      const response = await fetch('https://api.sociamosaic.com/api/payments/initiate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          hashString,
-          hashName: 'hash'
-        })
+        body: JSON.stringify(paymentData)
       });
 
-      const hashResult = await response.json();
-      paymentData.hash = hashResult.hash;
-
-      // Create PayU payment URL
-      const payuUrl = `https://test.payu.in/_payment?${new URLSearchParams(paymentData).toString()}`;
+      const result = await response.json();
       
-      // Open PayU payment page
-      const supported = await Linking.canOpenURL(payuUrl);
-      if (supported) {
-        await Linking.openURL(payuUrl);
+      if (result.success) {
+        console.log('🔗 Opening PayU URL in WebView:', result.paymentUrl);
+        console.log('🔗 URL length:', result.paymentUrl.length);
+        console.log('🔗 URL preview:', result.paymentUrl.substring(0, 100) + '...');
+        
+        // Navigate to WebView payment page
+        try {
+          router.push({
+            pathname: '/payment-webview',
+            params: { paymentUrl: result.paymentUrl }
+          });
+          console.log('✅ Navigated to PayU WebView successfully');
+        } catch (error) {
+          console.error('❌ Error navigating to PayU WebView:', error);
+          Alert.alert('त्रुटि', 'PayU भुगतान पेज खोलने में समस्या आई: ' + error.message);
+        }
       } else {
-        Alert.alert('त्रुटि', 'PayU भुगतान पेज खोलने में समस्या आई');
+        console.error('❌ Payment initiation failed:', result);
+        Alert.alert('त्रुटि', result.message || 'भुगतान शुरू करने में समस्या आई');
       }
 
     } catch (error) {
@@ -183,8 +166,7 @@ const CheckoutScreen = () => {
   };
 
   return (
-    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
@@ -232,41 +214,31 @@ const CheckoutScreen = () => {
               style={[styles.paymentMethod, selectedPaymentMethod === 'card' && styles.selectedPaymentMethod]}
               onPress={() => setSelectedPaymentMethod('card')}
             >
-              <Icon name="credit-card" size={24} color={selectedPaymentMethod === 'card' ? '#ff3b3b' : '#333'} />
+              <Icon name="credit-card" size={24} color={selectedPaymentMethod === 'card' ? '#990906' : '#333'} />
               <Text style={[styles.paymentText, selectedPaymentMethod === 'card' && styles.selectedPaymentText]}>
                 क्रेडिट/डेबिट कार्ड (PayU)
               </Text>
-              {selectedPaymentMethod === 'card' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
+              {selectedPaymentMethod === 'card' && <Icon name="check-circle" size={24} color="#990906" />}
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.paymentMethod, selectedPaymentMethod === 'upi' && styles.selectedPaymentMethod]}
               onPress={() => setSelectedPaymentMethod('upi')}
             >
-              <Icon name="bank" size={24} color={selectedPaymentMethod === 'upi' ? '#ff3b3b' : '#333'} />
+              <Icon name="bank" size={24} color={selectedPaymentMethod === 'upi' ? '#990906' : '#333'} />
               <Text style={[styles.paymentText, selectedPaymentMethod === 'upi' && styles.selectedPaymentText]}>
                 UPI (PayU)
               </Text>
-              {selectedPaymentMethod === 'upi' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
+              {selectedPaymentMethod === 'upi' && <Icon name="check-circle" size={24} color="#990906" />}
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.paymentMethod, selectedPaymentMethod === 'netbanking' && styles.selectedPaymentMethod]}
               onPress={() => setSelectedPaymentMethod('netbanking')}
             >
-              <Icon name="bank-transfer" size={24} color={selectedPaymentMethod === 'netbanking' ? '#ff3b3b' : '#333'} />
+              <Icon name="bank-transfer" size={24} color={selectedPaymentMethod === 'netbanking' ? '#990906' : '#333'} />
               <Text style={[styles.paymentText, selectedPaymentMethod === 'netbanking' && styles.selectedPaymentText]}>
                 नेट बैंकिंग (PayU)
               </Text>
-              {selectedPaymentMethod === 'netbanking' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.paymentMethod, selectedPaymentMethod === 'cod' && styles.selectedPaymentMethod]}
-              onPress={() => setSelectedPaymentMethod('cod')}
-            >
-              <Icon name="cash" size={24} color={selectedPaymentMethod === 'cod' ? '#ff3b3b' : '#333'} />
-              <Text style={[styles.paymentText, selectedPaymentMethod === 'cod' && styles.selectedPaymentText]}>
-                कैश ऑन डिलीवरी
-              </Text>
-              {selectedPaymentMethod === 'cod' && <Icon name="check-circle" size={24} color="#ff3b3b" />}
+              {selectedPaymentMethod === 'netbanking' && <Icon name="check-circle" size={24} color="#990906" />}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -287,8 +259,7 @@ const CheckoutScreen = () => {
             )}
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </SafeAreaWrapper>
+    </View>
   );
 };
 
@@ -302,7 +273,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -345,7 +316,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
     marginBottom: 4,
   },
   quantityText: {
@@ -375,7 +346,7 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
   },
   divider: {
     height: 1,
@@ -392,7 +363,7 @@ const styles = StyleSheet.create({
   selectedPaymentMethod: {
     backgroundColor: '#fff5f5',
     borderLeftWidth: 3,
-    borderLeftColor: '#ff3b3b',
+    borderLeftColor: '#990906',
   },
   paymentText: {
     flex: 1,
@@ -401,7 +372,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   selectedPaymentText: {
-    color: '#ff3b3b',
+    color: '#990906',
     fontWeight: '600',
   },
   bottomBar: {
@@ -411,7 +382,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
   },
   payButton: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

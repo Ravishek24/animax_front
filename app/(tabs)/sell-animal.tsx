@@ -1138,7 +1138,7 @@ const AnimalSellScreen = () => {
               <Text style={styles.pageTitle}>पशु बेचें</Text>
               <TouchableOpacity style={styles.myAnimalsButton}>
                 <Text style={styles.myAnimalsText}>मेरे पशु</Text>
-                <Icon name="chevron-right" size={16} color="#ff3b3b" />
+                <Icon name="chevron-right" size={16} color="#990906" />
               </TouchableOpacity>
             </View>
 
@@ -1199,7 +1199,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   myAnimalsText: {
-    color: '#ff3b3b',
+    color: '#990906',
     fontWeight: 'bold',
     marginRight: 4,
   },
@@ -1270,8 +1270,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   selectedButton: {
-    backgroundColor: '#ff3b3b',
-    borderColor: '#ff3b3b',
+    backgroundColor: '#990906',
+    borderColor: '#990906',
   },
   selectionText: {
     color: '#666',

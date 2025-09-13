@@ -119,7 +119,7 @@ const ProfileScreen = () => {
               style={styles.editButton}
               onPress={() => router.push('/edit-profile')}
             >
-              <FeatherIcon name="edit-2" size={20} color="#D32F2F" />
+              <FeatherIcon name="edit-2" size={20} color="#990906" />
             </TouchableOpacity>
           </View>
         </View>
@@ -130,19 +130,19 @@ const ProfileScreen = () => {
           
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Icon name="cow" size={24} color="#D32F2F" />
+              <Icon name="cow" size={24} color="#990906" />
               <Text style={styles.statValue}>{animalsListed}</Text>
               <Text style={styles.statLabel}>पशु ऐप पर डाले</Text>
             </View>
             
             <View style={[styles.statItem, styles.statBorder]}>
-              <Icon name="phone" size={24} color="#D32F2F" />
+              <Icon name="phone" size={24} color="#990906" />
               <Text style={styles.statValue}>{callsMade}</Text>
               <Text style={styles.statLabel}>आपने कॉल किए</Text>
             </View>
             
             <View style={styles.statItem}>
-              <Icon name="calendar-month" size={24} color="#D32F2F" />
+              <Icon name="calendar-month" size={24} color="#990906" />
               <Text style={styles.statValue}>{monthsConnected} महीने</Text>
               <Text style={styles.statLabel}>ऐनिमल से जुड़े</Text>
             </View>
@@ -162,7 +162,7 @@ const ProfileScreen = () => {
                 आपकी प्रोफाइल <Text style={styles.percentText}>{incompletePercent}% अधूरी</Text> है
               </Text>
               <Text style={styles.completionDescription}>
-                प्रोफाइल पूरा करें और <Icon name="circle" size={12} color="#FFC107" /> 10 कॉइन्स पाएँ
+                प्रोफाइल पूरा करें और <Icon name="circle" size={12} color="#f9ca1b" /> 10 कॉइन्स पाएँ
               </Text>
             </View>
           </View>
@@ -176,12 +176,12 @@ const ProfileScreen = () => {
         <View style={styles.walletContainer}>
           <View style={styles.walletHeader}>
             <View style={styles.walletTitleContainer}>
-              <Icon name="wallet" size={24} color="#FFC107" />
+              <Icon name="wallet" size={24} color="#f9ca1b" />
               <Text style={styles.walletTitle}>वॉलेट</Text>
             </View>
             
             <View style={styles.coinContainer}>
-              <Icon name="circle" size={20} color="#FFC107" />
+              <Icon name="circle" size={20} color="#f9ca1b" />
               <Text style={styles.coinCount}>{coins}</Text>
             </View>
           </View>
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#FFC107',
+    backgroundColor: '#f9ca1b',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   completionText: {
     fontSize: 10,
-    color: '#D32F2F',
+    color: '#990906',
     textAlign: 'center',
     fontWeight: 'bold',
   },
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   completeButton: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#990906',
     padding: 12,
     alignItems: 'center',
   },
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   walletButton: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#990906',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   supportButton: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#990906',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,

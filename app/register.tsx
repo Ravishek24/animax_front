@@ -131,7 +131,7 @@ const RegisterScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Icon name="account-plus" size={64} color="#ff3b3b" style={{ marginBottom: 12 }} />
+          <Icon name="account-plus" size={64} color="#990906" style={{ marginBottom: 12 }} />
           <Text style={styles.title}>प्रोफाइल पूरा करें</Text>
           <Text style={styles.subtitle}>
             अपना पूरा नाम और पता दर्ज करें
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
     marginBottom: 8,
   },
   subtitle: {
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   button: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingVertical: 14,
     borderRadius: 8,
     width: '100%',
@@ -334,12 +334,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   backText: {
-    color: '#ff3b3b',
+    color: '#990906',
     fontSize: 14,
     textDecorationLine: 'underline',
   },
   error: {
-    color: '#d32f2f',
+    color: '#990906',
     marginBottom: 8,
     alignSelf: 'flex-start',
   },

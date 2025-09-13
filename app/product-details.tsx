@@ -16,7 +16,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SafeAreaWrapper from '../components/SafeAreaWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
@@ -37,14 +36,12 @@ const ProductDetailsScreen = () => {
 
   if (!product) {
     return (
-      <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
+      <View style={styles.container}>
         <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
-        <SafeAreaView style={styles.container} edges={['left', 'right']}>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Product data is missing or invalid.</Text>
-          </View>
-        </SafeAreaView>
-      </SafeAreaWrapper>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>Product data is missing or invalid.</Text>
+        </View>
+      </View>
     );
   }
 
@@ -53,11 +50,11 @@ const ProductDetailsScreen = () => {
     for (let i = 1; i <= 5; i++) {
       if (i <= rating) {
         stars.push(
-          <FontAwesome key={i} name="star" size={16} color="#ffbb00" style={styles.star} />
+          <FontAwesome key={i} name="star" size={16} color="#f9ca1b" style={styles.star} />
         );
       } else {
         stars.push(
-          <FontAwesome key={i} name="star-o" size={16} color="#ffbb00" style={styles.star} />
+          <FontAwesome key={i} name="star-o" size={16} color="#f9ca1b" style={styles.star} />
         );
       }
     }
@@ -147,9 +144,8 @@ const ProductDetailsScreen = () => {
   };
 
   return (
-    <SafeAreaWrapper backgroundColor="#fff" topBackgroundColor="#E8E8E8" bottomBackgroundColor="#fff">
+    <View style={styles.container}>
       <StatusBar backgroundColor="#E8E8E8" barStyle="dark-content" translucent={false} />
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
         {/* Header - Match Marketplace Style */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -266,7 +262,7 @@ const ProductDetailsScreen = () => {
                 {product.features && product.features.length > 0 ? (
                   product.features.map((feature: string, index: number) => (
                     <View key={index} style={styles.featureItem}>
-                      <Icon name="check-circle" size={16} color="#ff3b3b" style={styles.featureIcon} />
+                      <Icon name="check-circle" size={16} color="#990906" style={styles.featureIcon} />
                       <Text style={styles.featureText}>{feature}</Text>
                     </View>
                   ))
@@ -331,8 +327,7 @@ const ProductDetailsScreen = () => {
             <Text style={styles.buyNowText}>अभी खरीदें</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </SafeAreaWrapper>
+    </View>
   );
 };
 
@@ -346,7 +341,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 10,
@@ -409,7 +404,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   paginationDotActive: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     width: 10,
     height: 10,
     borderRadius: 5,
@@ -439,7 +434,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#ff3b3b',
+    color: '#990906',
     marginBottom: 12,
   },
   ratingContainer: {
@@ -557,7 +552,7 @@ const styles = StyleSheet.create({
   },
   addToCartButton: {
     flex: 1,
-    backgroundColor: '#ffcc00',
+    backgroundColor: '#f9ca1b',
     paddingVertical: 12,
     borderRadius: 30,
     marginRight: 10,
@@ -566,7 +561,7 @@ const styles = StyleSheet.create({
   },
   buyNowButton: {
     flex: 1,
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     paddingVertical: 12,
     borderRadius: 30,
     alignItems: 'center',

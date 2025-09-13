@@ -13,6 +13,8 @@ import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import CommonHeader from '../../components/CommonHeader';
+import VideoCarousel from '../../components/VideoCarousel';
+import { fetchActiveVideos } from '../../services/videos';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +22,7 @@ const HomeScreen = () => {
   const router = useRouter();
   const [currentBannerSlide, setCurrentBannerSlide] = React.useState(0);
   const [currentProcessSlide, setCurrentProcessSlide] = React.useState(0);
+  const [videos, setVideos] = React.useState<any[]>([]);
   
   // Banner slider animation
   React.useEffect(() => {
@@ -37,6 +40,18 @@ const HomeScreen = () => {
     }, 3000);
     
     return () => clearInterval(processInterval);
+  }, []);
+
+  // Load videos for the video section
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const list = await fetchActiveVideos();
+        setVideos(list || []);
+      } catch (e) {
+        setVideos([]);
+      }
+    })();
   }, []);
 
   const processScrollViewRef = React.useRef<ScrollView>(null);
@@ -105,49 +120,38 @@ const HomeScreen = () => {
           </View>
         </View>
 
-        {/* Stats Section */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statsBox}>
-            <Text style={styles.statsNumber}>342+</Text>
-            <Text style={styles.statsLabel}>नए पशु उपलब्ध</Text>
-          </View>
-          <View style={styles.statsBox}>
-            <Text style={styles.statsNumber}>520+</Text>
-            <Text style={styles.statsLabel}>ख़रीदार उपलब्ध</Text>
-          </View>
-        </View>
-
-        {/* Animal Services Section */}
+        {/* Combined Animal Services Section with Stats */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>पशु सेवा</Text>
-          <View style={styles.iconGrid}>
+          <View style={styles.combinedServicesContainer}>
+            {/* Buy Animals Card */}
             <TouchableOpacity 
-              style={styles.iconItem}
+              style={styles.serviceCard}
               onPress={() => router.push('/buy-animal')}
             >
-              <Icon name="cow" size={24} color="#0047AB" style={styles.iconImage} />
-              <Text style={styles.iconText}>गाय खरीदें</Text>
+              <View style={styles.serviceCardHeader}>
+                <View style={styles.serviceIcons}>
+                  <Icon name="cow" size={32} color="white" style={styles.serviceIcon} />
+                  <Icon name="cow" size={32} color="white" style={styles.serviceIcon} />
+                </View>
+                <Text style={styles.serviceCardTitle}>पशु ख़रीदे »</Text>
+                <Text style={styles.serviceCardStats}>(342+ नए पशु उपलब्ध)</Text>
+              </View>
             </TouchableOpacity>
+
+            {/* Sell Animals Card */}
             <TouchableOpacity 
-              style={styles.iconItem}
+              style={styles.serviceCard}
               onPress={() => router.push('/sell-animal')}
             >
-              <Icon name="cow" size={24} color="#0047AB" style={styles.iconImage} />
-              <Text style={styles.iconText}>गाय बेचें</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.iconItem}
-              onPress={() => router.push('/buy-animal')}
-            >
-              <Icon name="cow" size={24} color="#00897B" style={styles.iconImage} />
-              <Text style={styles.iconText}>भैंस खरीदें</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.iconItem}
-              onPress={() => router.push('/sell-animal')}
-            >
-              <Icon name="cow" size={24} color="#00897B" style={styles.iconImage} />
-              <Text style={styles.iconText}>भैंस बेचें</Text>
+              <View style={styles.serviceCardHeader}>
+                <View style={styles.serviceIcons}>
+                  <Icon name="hand-coin" size={32} color="white" style={styles.serviceIcon} />
+                  <Icon name="cart" size={32} color="white" style={styles.serviceIcon} />
+                </View>
+                <Text style={styles.serviceCardTitle}>पशु बेचे »</Text>
+                <Text style={styles.serviceCardStats}>(520+ खरीदार उपलब्ध)</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -168,34 +172,13 @@ const HomeScreen = () => {
           </View>
         </View>
 
-        {/* Service Links Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>सेवा लिंक</Text>
-          <View style={styles.iconGrid}>
-            <TouchableOpacity style={styles.iconItem}>
-              <Icon name="format-list-bulleted" size={24} color="#0047AB" style={styles.iconImage} />
-              <Text style={styles.iconText}>बाज़ार भाव</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconItem}>
-              <FontAwesome name="user-md" size={24} color="#0047AB" style={styles.iconImage} />
-              <Text style={styles.iconText}>स्वास्थ्य</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconItem}>
-              <Icon name="history" size={24} color="#0047AB" style={styles.iconImage} />
-              <Text style={styles.iconText}>लेनदेन</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconItem}>
-              <Icon name="star" size={24} color="#0047AB" style={styles.iconImage} />
-              <Text style={styles.iconText}>सभी सेवाएँ</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        
 
         {/* Free Listing Section */}
         <View style={styles.freeListing}>
           <View style={styles.freeHeader}>
             <View style={styles.freeHeaderIcon}>
-              <Icon name="account" size={28} color="#ff3b3b" />
+              <Icon name="account" size={28} color="#990906" />
             </View>
             <View>
               <Text style={styles.freeTitle}>FREE में पशु दर्ज करें</Text>
@@ -224,6 +207,14 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Videos Section */}
+        {videos.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>हमारी वीडियो</Text>
+            <VideoCarousel items={videos} />
+          </View>
+        )}
 
         {/* Process Section */}
         <View style={styles.processSection}>
@@ -353,37 +344,48 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   
-  // Stats Section
-  statsContainer: {
+  // Combined Services Section
+  combinedServicesContainer: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    marginBottom: 16,
     gap: 10,
   },
-  statsBox: {
+  serviceCard: {
     flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 12,
-    alignItems: 'center',
+    backgroundColor: '#990906',
+    borderRadius: 12,
+    padding: 16,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 4,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  statsNumber: {
-    fontSize: 20,
+  serviceCardHeader: {
+    alignItems: 'center',
+  },
+  serviceIcons: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    gap: 8,
+  },
+  serviceIcon: {
+    marginHorizontal: 4,
+  },
+  serviceCardTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#ff3b3b',
-    marginBottom: 5,
+    color: 'white',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  statsLabel: {
+  serviceCardStats: {
     fontSize: 12,
-    color: '#444',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
   },
   
   // Section Container and Title
@@ -439,7 +441,7 @@ const styles = StyleSheet.create({
   marketplaceImage: {
     flex: 1,
     height: '100%',
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     justifyContent: 'center',
     paddingLeft: 20,
   },
@@ -450,7 +452,7 @@ const styles = StyleSheet.create({
   marketplaceButton: {
     height: '100%',
     width: 140,
-    backgroundColor: '#ffcc00',
+    backgroundColor: '#f9ca1b',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -490,7 +492,7 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   freeTitle: {
-    color: '#ff3b3b',
+    color: '#990906',
     fontWeight: '700',
     fontSize: 18,
     marginBottom: 5,
@@ -508,7 +510,7 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     position: 'relative',
     borderLeftWidth: 3,
-    borderLeftColor: '#ff3b3b',
+    borderLeftColor: '#990906',
   },
   animalOptions: {
     flexDirection: 'row',
@@ -517,7 +519,7 @@ const styles = StyleSheet.create({
   },
   animalOption: {
     flex: 1,
-    backgroundColor: '#ffcc00',
+    backgroundColor: '#f9ca1b',
     borderRadius: 20,
     padding: 10,
     alignItems: 'center',
@@ -597,7 +599,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dotActive: {
-    backgroundColor: '#ff3b3b',
+    backgroundColor: '#990906',
     width: 20,
     borderRadius: 10,
   },
