@@ -15,6 +15,7 @@ const LoginScreen = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState('');
 
+
   const handleSendOTP = async () => {
     setError('');
     if (!/^\d{10}$/.test(phone)) {
@@ -24,18 +25,46 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const data = await apiService.sendOTP(`+91${phone}`);
       
-      if (data.success) {
-        setSessionUuid(data.sessionUuid || '');
+      // Send OTP request
+      const response = await fetch('https://api.sociamosaic.com/api/auth/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: `+91${phone}`
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      
+      if (responseData.success) {
+        setSessionUuid(responseData.sessionUuid || '');
         setOtpSent(true);
         Alert.alert('सफल', 'OTP आपके मोबाइल नंबर पर भेज दिया गया है');
       } else {
-        setError(data.message || 'OTP भेजने में समस्या हुई');
+        setError(responseData.message || 'OTP भेजने में समस्या हुई');
       }
     } catch (error) {
       console.error('Send OTP Error:', error);
-      setError('नेटवर्क समस्या। कृपया दोबारा कोशिश करें');
+      
+      // More specific error messages
+      if (error.message.includes('Network request failed')) {
+        setError('इंटरनेट कनेक्शन की जांच करें। सर्वर तक पहुंच नहीं मिल रही।');
+      } else if (error.message.includes('timeout')) {
+        setError('सर्वर से जवाब नहीं मिला। दोबारा कोशिश करें।');
+      } else if (error.message.includes('TypeError')) {
+        setError('नेटवर्क एरर। कृपया ऐप रीस्टार्ट करें।');
+      } else {
+        setError(`नेटवर्क समस्या: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }

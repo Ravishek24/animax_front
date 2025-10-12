@@ -13,13 +13,16 @@ import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import CommonHeader from '../../components/CommonHeader';
+import { useLanguage } from '../../contexts/LanguageContext';
 import VideoCarousel from '../../components/VideoCarousel';
 import { fetchActiveVideos } from '../../services/videos';
 
 const { width } = Dimensions.get('window');
 
+
 const HomeScreen = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [currentBannerSlide, setCurrentBannerSlide] = React.useState(0);
   const [currentProcessSlide, setCurrentProcessSlide] = React.useState(0);
   const [videos, setVideos] = React.useState<any[]>([]);
@@ -69,7 +72,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       
       {/* Header */}
-      <CommonHeader title="पशुपालन मंच" />
+      <CommonHeader title={t('appName')} />
 
       <ScrollView 
         style={styles.scrollView}
@@ -122,7 +125,6 @@ const HomeScreen = () => {
 
         {/* Combined Animal Services Section with Stats */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>पशु सेवा</Text>
           <View style={styles.combinedServicesContainer}>
             {/* Buy Animals Card */}
             <TouchableOpacity 
@@ -131,10 +133,9 @@ const HomeScreen = () => {
             >
               <View style={styles.serviceCardHeader}>
                 <View style={styles.serviceIcons}>
-                  <Icon name="cow" size={32} color="white" style={styles.serviceIcon} />
-                  <Icon name="cow" size={32} color="white" style={styles.serviceIcon} />
+                  <Image source={require('../../assets/a.png')} style={styles.serviceIconImage} />
                 </View>
-                <Text style={styles.serviceCardTitle}>पशु ख़रीदे »</Text>
+                <Text style={styles.serviceCardTitle}>{t('buyAnimals')}</Text>
                 <Text style={styles.serviceCardStats}>(342+ नए पशु उपलब्ध)</Text>
               </View>
             </TouchableOpacity>
@@ -146,30 +147,25 @@ const HomeScreen = () => {
             >
               <View style={styles.serviceCardHeader}>
                 <View style={styles.serviceIcons}>
-                  <Icon name="hand-coin" size={32} color="white" style={styles.serviceIcon} />
-                  <Icon name="cart" size={32} color="white" style={styles.serviceIcon} />
+                  <Image source={require('../../assets/b.png')} style={styles.serviceIconImage} />
                 </View>
-                <Text style={styles.serviceCardTitle}>पशु बेचे »</Text>
+                <Text style={styles.serviceCardTitle}>{t('sellAnimals')}</Text>
                 <Text style={styles.serviceCardStats}>(520+ खरीदार उपलब्ध)</Text>
               </View>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Marketplace Promo Card */}
+        {/* Marketplace Promo Card */
+        }
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>पशु आपूर्ति</Text>
-          <View style={styles.marketplaceCard}>
-            <View style={styles.marketplaceImage}>
-              <Text style={styles.marketplaceText}>पशु दवा और आहार</Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.marketplaceButton}
-              onPress={() => router.push('/marketplace')}
-            >
-              <Text style={styles.marketplaceButtonText}>खरीदें</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.sectionTitle}>{t('animalSupplies')}</Text>
+          <TouchableOpacity 
+            style={styles.marketplaceCard}
+            onPress={() => router.push('/marketplace')}
+          >
+            <Text style={styles.marketplacePillText}>{t('marketplacePill')}</Text>
+          </TouchableOpacity>
         </View>
 
         
@@ -211,14 +207,14 @@ const HomeScreen = () => {
         {/* Videos Section */}
         {videos.length > 0 && (
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>हमारी वीडियो</Text>
+            <Text style={styles.sectionTitle}>{t('ourVideos')}</Text>
             <VideoCarousel items={videos} />
           </View>
         )}
 
         {/* Process Section */}
         <View style={styles.processSection}>
-          <Text style={styles.processTitle}>समझें हर प्रक्रिया, आसान तरीके से!</Text>
+          <Text style={styles.processTitle}>{t('processTitle')}</Text>
           <ScrollView 
             ref={processScrollViewRef}
             horizontal 
@@ -375,6 +371,11 @@ const styles = StyleSheet.create({
   serviceIcon: {
     marginHorizontal: 4,
   },
+  serviceIconImage: {
+    width: 50,
+    height: 50,
+    marginHorizontal: 4,
+  },
   serviceCardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -423,12 +424,12 @@ const styles = StyleSheet.create({
   
   // Marketplace Card
   marketplaceCard: {
-    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginHorizontal: 16,
     borderRadius: 12,
-    overflow: 'hidden',
     height: 70,
+    backgroundColor: '#f9ca1b',
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -438,28 +439,15 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  marketplaceImage: {
-    flex: 1,
-    height: '100%',
-    backgroundColor: '#990906',
-    justifyContent: 'center',
-    paddingLeft: 20,
-  },
-  marketplaceText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  marketplaceButton: {
-    height: '100%',
-    width: 140,
-    backgroundColor: '#f9ca1b',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  marketplaceButtonText: {
+  marketplacePillText: {
     color: '#333',
-    fontWeight: '600',
-    fontSize: 15,
+    fontWeight: '700',
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'white',
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   
   // Free Listing Section

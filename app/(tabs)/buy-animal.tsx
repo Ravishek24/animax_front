@@ -141,6 +141,13 @@ const BuyAnimalsScreen = () => {
       if (data.success && data.data && Array.isArray(data.data) && data.data.length > 0) {
         console.log('✅ Animals loaded successfully, count:', data.data.length);
         const newAnimals = data.data;
+        
+        // Debug: Check the structure of the first animal
+        if (newAnimals.length > 0) {
+          console.log('🔍 First animal structure:', JSON.stringify(newAnimals[0], null, 2));
+          console.log('🔍 First animal media:', newAnimals[0].media);
+        }
+        
         setAnimals(reset ? newAnimals : prev => [...prev, ...newAnimals]);
         setHasMore(newAnimals.length === PAGE_SIZE);
         setPage(pageNum);
@@ -213,46 +220,62 @@ const BuyAnimalsScreen = () => {
   };
 
   const getPrimaryImage = (animal: Animal): string => {
-    if (animal.media && animal.media.length > 0) {
+    try {
+      if (!animal || !animal.media || !Array.isArray(animal.media) || animal.media.length === 0) {
+        return 'https://via.placeholder.com/300x200?text=No+Image';
+      }
+      
       // First try to find primary image
-      const primaryImage = animal.media.find(m => m.is_primary && m.media_type?.includes('image'));
+      const primaryImage = animal.media.find(m => m && m.is_primary && m.media_type?.includes('image'));
       if (primaryImage) return primaryImage.media_url;
       
       // Then try to find any udder photo
-      const udderPhoto = animal.media.find(m => m.media_category === 'udder_photo');
+      const udderPhoto = animal.media.find(m => m && m.media_category === 'udder_photo');
       if (udderPhoto) return udderPhoto.media_url;
       
       // Then any image
-      const anyImage = animal.media.find(m => m.media_type?.includes('image'));
+      const anyImage = animal.media.find(m => m && m.media_type?.includes('image'));
       if (anyImage) return anyImage.media_url;
+    } catch (error) {
+      console.error('Error in getPrimaryImage:', error);
     }
     return 'https://via.placeholder.com/300x200?text=No+Image';
   };
 
   const getMediaCount = (animal: Animal): { images: number; videos: number; total: number } => {
-    if (!animal.media || animal.media.length === 0) {
+    try {
+      if (!animal || !animal.media || !Array.isArray(animal.media) || animal.media.length === 0) {
+        return { images: 0, videos: 0, total: 0 };
+      }
+
+      const images = animal.media.filter(m => m && m.media_type && m.media_type.includes('image')).length;
+      const videos = animal.media.filter(m => m && m.media_type && m.media_type.includes('video')).length;
+      
+      return {
+        images,
+        videos,
+        total: animal.media.length
+      };
+    } catch (error) {
+      console.error('Error in getMediaCount:', error);
       return { images: 0, videos: 0, total: 0 };
     }
-
-    const images = animal.media.filter(m => m.media_type?.includes('image')).length;
-    const videos = animal.media.filter(m => m.media_type?.includes('video')).length;
-    
-    return {
-      images,
-      videos,
-      total: animal.media.length
-    };
   };
 
   const getMediaCategories = (animal: Animal): string[] => {
-    if (!animal.media || animal.media.length === 0) return [];
-    
-    const categories = animal.media
-      .map(m => m.media_category)
-      .filter((cat): cat is string => cat !== undefined && cat !== null) // Type guard to remove undefined/null
-      .filter((cat, index, arr) => arr.indexOf(cat) === index); // Remove duplicates
-    
-    return categories;
+    try {
+      if (!animal || !animal.media || !Array.isArray(animal.media) || animal.media.length === 0) return [];
+      
+      const categories = animal.media
+        .map(m => m && m.media_category ? m.media_category : null)
+        .filter((cat): cat is string => cat !== undefined && cat !== null) // Type guard to remove undefined/null
+        .filter((cat, index, arr) => arr.indexOf(cat) === index); // Remove duplicates
+      
+      return categories;
+    } catch (error) {
+      console.error('Error in getMediaCategories:', error);
+      return [];
+    }
   };
 
   const getCategoryName = (animal: Animal): string => {

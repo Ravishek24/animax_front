@@ -69,7 +69,10 @@ class ApiService {
       };
 
       console.log(`🌐 API Request: ${config.method} ${url}`);
+      console.log(`📋 Request Headers:`, headers);
+      console.log(`📦 Request Body:`, config.body);
       
+      // Simple fetch without timeout (server responds quickly)
       const response = await fetch(url, config);
       
       // Check if response is JSON
@@ -104,7 +107,27 @@ class ApiService {
 
       return data as T;
     } catch (error) {
-      console.error('❌ API Error:', error);
+      console.error('❌ API Error Details:');
+      console.error('  Error Type:', error.constructor.name);
+      console.error('  Error Message:', error.message);
+      console.error('  Error Name:', error.name);
+      console.error('  Error Code:', error.code);
+      console.error('  Full Error:', error);
+      
+      // Check for specific error types
+      if (error.message.includes('Network request failed')) {
+        console.error('  🌐 Network request failed - possible causes:');
+        console.error('    - No internet connection');
+        console.error('    - DNS resolution failed');
+        console.error('    - SSL/TLS handshake failed');
+        console.error('    - Server not responding');
+        console.error('    - Firewall blocking request');
+        throw new Error(`Network request failed: ${error.message}`);
+      } else if (error.message.includes('TypeError')) {
+        console.error('  🔧 TypeError detected - possible fetch API issue');
+        throw new Error(`Network error: ${error.message}`);
+      }
+      
       // Provide more context about the error
       if (error instanceof Error) {
         throw new Error(`API request failed: ${error.message}`);

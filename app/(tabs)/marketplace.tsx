@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../slices/cartSlice';
@@ -225,23 +224,6 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
     }
   };
   
-  const renderStars = (rating: number = 0) => {
-    console.log('⭐ Rendering stars for rating:', rating);
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= rating) {
-        stars.push(
-          <FontAwesome key={i} name="star" size={12} color="#f9ca1b" />
-        );
-      } else {
-        stars.push(
-          <FontAwesome key={i} name="star-o" size={12} color="#f9ca1b" />
-        );
-      }
-    }
-    console.log('⭐ Stars array created, length:', stars.length);
-    return <View style={{ flexDirection: 'row' }}>{stars}</View>;
-  };
 
   return (
     <TouchableOpacity 
@@ -262,12 +244,6 @@ const ProductCard = ({ product, onPress }: ProductCardProps) => {
       <View style={styles.productDetails}>
         <Text style={styles.productName} numberOfLines={2}>{String(product.name || 'Unnamed Product')}</Text>
         <Text style={styles.productPrice}>₹{String(product.price || 0)}</Text>
-        <View style={styles.productRating}>
-          <View style={styles.ratingStars}>
-            {renderStars(Number(product.rating) || 0)}
-          </View>
-          <Text style={styles.reviewCount}>({Number(product.reviews) || 0})</Text>
-        </View>
         <TouchableOpacity 
           style={[
             styles.addToCartButton,
@@ -746,6 +722,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
+    borderWidth: 1,
+    borderColor: '#990906',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -801,6 +779,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
+    borderWidth: 1,
+    borderColor: '#f9ca1b',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -808,7 +788,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   productName: {
-    fontWeight: '600',
+    fontWeight: 'bold',
     fontSize: 14,
     color: '#333',
     marginBottom: 5,
@@ -819,18 +799,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#990906',
     marginBottom: 8,
-  },
-  productRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingStars: {
-    flexDirection: 'row',
-    marginRight: 5,
-  },
-  reviewCount: {
-    fontSize: 12,
-    color: '#777',
   },
   addToCartButton: {
     backgroundColor: '#f9ca1b',

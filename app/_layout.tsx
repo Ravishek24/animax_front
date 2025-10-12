@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { AuthProvider } from '../contexts/AuthContext';
+import { LanguageProvider } from '../contexts/LanguageContext';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <AuthProvider>
+        <LanguageProvider>
         <SafeAreaProvider>
           <SafeAreaWrapper>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -97,6 +99,7 @@ export default function RootLayout() {
             </ThemeProvider>
           </SafeAreaWrapper>
         </SafeAreaProvider>
+        </LanguageProvider>
       </AuthProvider>
     </Provider>
   );

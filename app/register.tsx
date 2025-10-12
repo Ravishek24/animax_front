@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services';
 
@@ -32,37 +31,7 @@ const RegisterScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const addressRef = useRef<any>(null);
 
-  const handleAddressSelect = (data: any, details: any = null) => {
-    if (details) {
-      setAddress(data.description);
-      
-      // Extract address components
-      const addressComponents = details.address_components;
-      let cityName = '';
-      let stateName = '';
-      let pincodeValue = '';
-
-      for (const component of addressComponents) {
-        if (component.types.includes('locality')) {
-          cityName = component.long_name;
-        }
-        if (component.types.includes('administrative_area_level_1')) {
-          stateName = component.long_name;
-        }
-        if (component.types.includes('postal_code')) {
-          pincodeValue = component.long_name;
-        }
-      }
-
-      setCity(cityName);
-      setState(stateName);
-      setPincode(pincodeValue);
-      setLatitude(details.geometry.location.lat);
-      setLongitude(details.geometry.location.lng);
-    }
-  };
 
   const handleRegister = async () => {
     setError('');
@@ -154,24 +123,15 @@ const RegisterScreen = () => {
           />
 
           <Text style={styles.label}>पता *</Text>
-          <GooglePlacesAutocomplete
-            ref={addressRef}
-            placeholder="अपना पता खोजें और चुनें"
-            fetchDetails={true}
-            onPress={handleAddressSelect}
-            query={{
-              key: 'YOUR_GOOGLE_PLACES_API_KEY', // Replace with your API key
-              language: 'hi', // Hindi
-              components: 'country:in', // India only
-            }}
-            styles={{
-              container: styles.googlePlacesContainer,
-              textInput: styles.googlePlacesInput,
-              listView: styles.googlePlacesListView,
-            }}
-            enablePoweredByContainer={false}
-            nearbyPlacesAPI="GooglePlacesSearch"
-            debounce={300}
+          <TextInput
+            style={styles.input}
+            value={address}
+            onChangeText={setAddress}
+            placeholder="अपना पूरा पता दर्ज करें"
+            placeholderTextColor="#bbb"
+            multiline={true}
+            numberOfLines={3}
+            textAlignVertical="top"
           />
 
           <View style={styles.addressDetails}>
@@ -288,27 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fafafa',
     marginBottom: 12,
-  },
-  googlePlacesContainer: {
-    width: '100%',
-    marginBottom: 12,
-  },
-  googlePlacesInput: {
-    fontSize: 18,
-    color: '#222',
-    paddingVertical: 15,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    backgroundColor: '#fafafa',
-  },
-  googlePlacesListView: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    marginTop: 4,
+    minHeight: 50,
   },
   addressDetails: {
     width: '100%',

@@ -13,10 +13,13 @@ import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const ProfileScreen = () => {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
+  const [showLanguageMenu, setShowLanguageMenu] = React.useState(false);
 
   const stats = (user as any)?.stats || {} as any;
   const locationText = (user?.city || user?.state) ? `${user?.city || ''} ${user?.state || ''}`.trim() : (user?.address || '—');
@@ -29,15 +32,15 @@ const ProfileScreen = () => {
 
   const handleLogout = () => {
     Alert.alert(
-      'लॉगआउट',
-      'क्या आप वाकई लॉगआउट करना चाहते हैं?',
+      t('logoutConfirmTitle'),
+      t('logoutConfirmMessage'),
       [
         {
-          text: 'रद्द करें',
+          text: t('cancel'),
           style: 'cancel',
         },
         {
-          text: 'लॉगआउट',
+          text: t('logoutAction'),
           style: 'destructive',
           onPress: async () => {
             await logout();
@@ -60,13 +63,37 @@ const ProfileScreen = () => {
             <Icon name="arrow-left" size={24} color="#000" />
           </TouchableOpacity>
           
-          <Text style={styles.headerTitle}>प्रोफाइल</Text>
+          <Text style={styles.headerTitle}>{t('profile')}</Text>
           
           <View style={styles.headerRightContainer}>
-            <TouchableOpacity style={styles.languageButton}>
-              <Text style={styles.languageText}>En | हि</Text>
-              <Icon name="chevron-down" size={18} color="#fff" />
-            </TouchableOpacity>
+            <View>
+              <TouchableOpacity 
+                style={styles.languageButton}
+                onPress={() => setShowLanguageMenu((prev) => !prev)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.languageText}>
+                  {language === 'en-hi' ? 'En | हि' : 'ਪੰਜਾਬੀ'}
+                </Text>
+                <Icon name="chevron-down" size={18} color="#fff" />
+              </TouchableOpacity>
+              {showLanguageMenu && (
+                <View style={styles.languageMenu}>
+                  <TouchableOpacity 
+                    style={styles.languageMenuItem}
+                    onPress={() => { setLanguage('en-hi'); setShowLanguageMenu(false); }}
+                  >
+                    <Text style={styles.languageMenuText}>En | हि (Default)</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.languageMenuItem}
+                    onPress={() => { setLanguage('pa'); setShowLanguageMenu(false); }}
+                  >
+                    <Text style={styles.languageMenuText}>ਪੰਜਾਬੀ</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
             
             <TouchableOpacity style={styles.moreButton} onPress={handleLogout}>
               <Icon name="logout" size={24} color="#333" />
@@ -84,7 +111,7 @@ const ProfileScreen = () => {
                 </Text>
               </View>
               <View style={styles.completionBadge}>
-                <Text style={styles.completionText}>{incompletePercent}% अधूरी</Text>
+                <Text style={styles.completionText}>{incompletePercent}% {t('incomplete')}</Text>
               </View>
             </View>
             
@@ -126,25 +153,25 @@ const ProfileScreen = () => {
         
         {/* Stats Section */}
         <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Animax पर आपका सफर</Text>
+          <Text style={styles.statsTitle}>{t('statsJourneyTitle')}</Text>
           
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Icon name="cow" size={24} color="#990906" />
               <Text style={styles.statValue}>{animalsListed}</Text>
-              <Text style={styles.statLabel}>पशु ऐप पर डाले</Text>
+              <Text style={styles.statLabel}>{t('statAnimalsListed')}</Text>
             </View>
             
             <View style={[styles.statItem, styles.statBorder]}>
               <Icon name="phone" size={24} color="#990906" />
               <Text style={styles.statValue}>{callsMade}</Text>
-              <Text style={styles.statLabel}>आपने कॉल किए</Text>
+              <Text style={styles.statLabel}>{t('statCallsMade')}</Text>
             </View>
             
             <View style={styles.statItem}>
               <Icon name="calendar-month" size={24} color="#990906" />
-              <Text style={styles.statValue}>{monthsConnected} महीने</Text>
-              <Text style={styles.statLabel}>ऐनिमल से जुड़े</Text>
+              <Text style={styles.statValue}>{monthsConnected}</Text>
+              <Text style={styles.statLabel}>{t('statMonthsConnected')}</Text>
             </View>
           </View>
         </View>
@@ -159,16 +186,16 @@ const ProfileScreen = () => {
             
             <View style={styles.completionTextContainer}>
               <Text style={styles.completionTitleText}>
-                आपकी प्रोफाइल <Text style={styles.percentText}>{incompletePercent}% अधूरी</Text> है
+                {t('yourProfile')} <Text style={styles.percentText}>{incompletePercent}% {t('incomplete')}</Text> {t('isWord')}
               </Text>
               <Text style={styles.completionDescription}>
-                प्रोफाइल पूरा करें और <Icon name="circle" size={12} color="#f9ca1b" /> 10 कॉइन्स पाएँ
+                {t('completeProfileEarn')} <Icon name="circle" size={12} color="#f9ca1b" /> 10 {t('coinsWord')}
               </Text>
             </View>
           </View>
           
           <TouchableOpacity style={styles.completeButton}>
-            <Text style={styles.completeButtonText}>अभी पूरी करें</Text>
+            <Text style={styles.completeButtonText}>{t('completeNow')}</Text>
           </TouchableOpacity>
         </View>
         
@@ -177,7 +204,7 @@ const ProfileScreen = () => {
           <View style={styles.walletHeader}>
             <View style={styles.walletTitleContainer}>
               <Icon name="wallet" size={24} color="#f9ca1b" />
-              <Text style={styles.walletTitle}>वॉलेट</Text>
+              <Text style={styles.walletTitle}>{t('wallet')}</Text>
             </View>
             
             <View style={styles.coinContainer}>
@@ -187,7 +214,7 @@ const ProfileScreen = () => {
           </View>
           
           <TouchableOpacity style={styles.walletButton}>
-            <Text style={styles.walletButtonText}>वॉलेट देखें</Text>
+            <Text style={styles.walletButtonText}>{t('viewWallet')}</Text>
             <Icon name="chevron-right" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -196,12 +223,12 @@ const ProfileScreen = () => {
         <View style={styles.animalsContainer}>
           <View style={styles.animalsTitleContainer}>
             <Icon name="cow" size={24} color="#333" />
-            <Text style={styles.animalsTitle}>{user?.full_name || 'User'} जी के पशु</Text>
+            <Text style={styles.animalsTitle}>{user?.full_name || 'User'} {t('animalsOfSuffix')}</Text>
           </View>
           
           <TouchableOpacity style={styles.supportButton}>
             <Icon name="headset" size={20} color="#fff" />
-            <Text style={styles.supportButtonText}>ग्राहक सेवा</Text>
+            <Text style={styles.supportButtonText}>{t('customerSupport')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -248,6 +275,32 @@ const styles = StyleSheet.create({
   languageText: {
     color: '#fff',
     marginRight: 4,
+  },
+  languageMenu: {
+    position: 'absolute',
+    right: 12,
+    top: 42,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    zIndex: 100,
+  },
+  languageMenuItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    minWidth: 120,
+  },
+  languageMenuText: {
+    color: '#333',
+    fontSize: 14,
   },
   moreButton: {
     padding: 4,

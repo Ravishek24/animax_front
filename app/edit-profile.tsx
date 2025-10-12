@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services';
 
@@ -208,28 +207,15 @@ const EditProfileScreen = () => {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>पता</Text>
-              <GooglePlacesAutocomplete
-                ref={addressRef}
-                placeholder="अपना पता खोजें और चुनें"
-                fetchDetails={true}
-                onPress={handleAddressSelect}
-                query={{
-                  key: 'YOUR_GOOGLE_PLACES_API_KEY', // Replace with your API key
-                  language: 'hi', // Hindi
-                  components: 'country:in', // India only
-                }}
-                styles={{
-                  container: styles.googlePlacesContainer,
-                  textInput: styles.googlePlacesInput,
-                  listView: styles.googlePlacesListView,
-                }}
-                enablePoweredByContainer={false}
-                nearbyPlacesAPI="GooglePlacesSearch"
-                debounce={300}
-                textInputProps={{
-                  value: formData.address,
-                  onChangeText: (value) => handleInputChange('address', value)
-                }}
+              <TextInput
+                style={styles.textInput}
+                value={formData.address}
+                onChangeText={(value) => handleInputChange('address', value)}
+                placeholder="अपना पूरा पता दर्ज करें"
+                placeholderTextColor="#999"
+                multiline={true}
+                numberOfLines={3}
+                textAlignVertical="top"
               />
             </View>
 

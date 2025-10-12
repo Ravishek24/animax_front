@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: 'https://api.sociamosaic.com',
-  TIMEOUT: 10000,
+  TIMEOUT: 15000, // 15 seconds should be enough for quick responses
   HEADERS: {
     'Content-Type': 'application/json',
   }

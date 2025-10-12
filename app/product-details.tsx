@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -45,21 +44,6 @@ const ProductDetailsScreen = () => {
     );
   }
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= rating) {
-        stars.push(
-          <FontAwesome key={i} name="star" size={16} color="#f9ca1b" style={styles.star} />
-        );
-      } else {
-        stars.push(
-          <FontAwesome key={i} name="star-o" size={16} color="#f9ca1b" style={styles.star} />
-        );
-      }
-    }
-    return <>{stars}</>;
-  };
 
   const onSlideChange = (event: any) => {
     const slideIndex = Math.round(
@@ -219,13 +203,6 @@ const ProductDetailsScreen = () => {
             <Text style={styles.productName}>{product.name}</Text>
             <Text style={styles.productPrice}>₹{product.price}</Text>
             
-            {/* Ratings */}
-            <View style={styles.ratingContainer}>
-              <View style={styles.ratingStars}>
-                {renderStars(product.rating)}
-              </View>
-              <Text style={styles.reviewCount}>{product.reviews} समीक्षाएँ</Text>
-            </View>
             
             {/* Quantity Selector */}
             <View style={styles.quantityContainer}>
@@ -249,25 +226,72 @@ const ProductDetailsScreen = () => {
               </View>
             </View>
             
-            {/* Description */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>विवरण</Text>
-              <Text style={styles.description}>{product.description}</Text>
-            </View>
-            
             {/* Features */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>विशेषताएँ</Text>
               <View style={styles.featuresList}>
-                {product.features && product.features.length > 0 ? (
-                  product.features.map((feature: string, index: number) => (
-                    <View key={index} style={styles.featureItem}>
-                      <Icon name="check-circle" size={16} color="#990906" style={styles.featureIcon} />
-                      <Text style={styles.featureText}>{feature}</Text>
-                    </View>
-                  ))
+                {product.description ? (
+                  <>
+                    {product.description.split('\n').filter(line => line.trim()).map((line, index) => (
+                      <View key={`desc-${index}`} style={styles.featureItem}>
+                        <Icon name="check-circle" size={16} color="#990906" style={styles.featureIcon} />
+                        <Text style={styles.featureText}>{line.trim()}</Text>
+                      </View>
+                    ))}
+                  </>
                 ) : (
                   <Text style={styles.noFeaturesText}>इस उत्पाद के लिए कोई विशेषताएँ उपलब्ध नहीं हैं</Text>
+                )}
+              </View>
+            </View>
+            
+            {/* Description (Ingredients) */}
+            {product.ingredients && product.ingredients.trim() && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>विवरण</Text>
+                <Text style={styles.description}>{product.ingredients}</Text>
+              </View>
+            )}
+            
+            {/* Dosage Information */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>खुराक की जानकारी</Text>
+              <View style={styles.dosageInfo}>
+                {product.dosage_frequency && (
+                  <View style={styles.dosageItem}>
+                    <Icon name="clock-outline" size={18} color="#990906" style={styles.dosageIcon} />
+                    <View style={styles.dosageContent}>
+                      <Text style={styles.dosageLabel}>खुराक की आवृत्ति:</Text>
+                      <Text style={styles.dosageText}>{product.dosage_frequency}</Text>
+                    </View>
+                  </View>
+                )}
+                {product.dosage_amount && (
+                  <View style={styles.dosageItem}>
+                    <Icon name="scale" size={18} color="#990906" style={styles.dosageIcon} />
+                    <View style={styles.dosageContent}>
+                      <Text style={styles.dosageLabel}>खुराक की मात्रा:</Text>
+                      <Text style={styles.dosageText}>{product.dosage_amount} {product.dosage_unit || ''}</Text>
+                    </View>
+                  </View>
+                )}
+                {product.target_animal && (
+                  <View style={styles.dosageItem}>
+                    <Icon name="cow" size={18} color="#990906" style={styles.dosageIcon} />
+                    <View style={styles.dosageContent}>
+                      <Text style={styles.dosageLabel}>लक्षित पशु:</Text>
+                      <Text style={styles.dosageText}>{product.target_animal}</Text>
+                    </View>
+                  </View>
+                )}
+                {product.net_weight && (
+                  <View style={styles.dosageItem}>
+                    <Icon name="package-variant" size={18} color="#990906" style={styles.dosageIcon} />
+                    <View style={styles.dosageContent}>
+                      <Text style={styles.dosageLabel}>पैकेज का वजन:</Text>
+                      <Text style={styles.dosageText}>{product.net_weight}</Text>
+                    </View>
+                  </View>
                 )}
               </View>
             </View>
@@ -278,7 +302,7 @@ const ProductDetailsScreen = () => {
               <View style={styles.shippingInfo}>
                 <Icon name="truck-delivery" size={18} color="#333" style={styles.shippingIcon} />
                 <Text style={styles.shippingText}>
-                  3-5 दिनों में डिलीवरी
+                  7-10 दिनों में डिलीवरी
                 </Text>
               </View>
               <View style={styles.shippingInfo}>
@@ -437,22 +461,6 @@ const styles = StyleSheet.create({
     color: '#990906',
     marginBottom: 12,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  ratingStars: {
-    flexDirection: 'row',
-    marginRight: 10,
-  },
-  star: {
-    marginRight: 3,
-  },
-  reviewCount: {
-    fontSize: 14,
-    color: '#666',
-  },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -514,6 +522,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     fontStyle: 'italic',
+  },
+  dosageInfo: {
+    marginTop: 5,
+  },
+  dosageItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#990906',
+  },
+  dosageIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  dosageContent: {
+    flex: 1,
+  },
+  dosageLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  dosageText: {
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 20,
   },
   shippingInfo: {
     flexDirection: 'row',

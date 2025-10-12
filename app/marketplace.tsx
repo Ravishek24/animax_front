@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SafeAreaWrapper from '../components/SafeAreaWrapper';
+import { useLanguage } from '../contexts/LanguageContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // import NutriDietBanner from '../assets/NutriDiet (2).png';
 
@@ -34,12 +35,15 @@ interface CartItem {
 interface Product {
   id: string;
   name: string;
+  paName?: string;
   price: number;
   rating: number;
   reviews: number;
   description: string;
+  paDescription?: string;
   images: any[];
   features: string[];
+  paFeatures?: string[];
   stockAvailable: boolean;
 }
 
@@ -51,22 +55,24 @@ interface ProductCardProps {
 }
 
 const CATEGORIES = [
-  { id: '1', name: 'सभी श्रेणियां' },
-  { id: '2', name: 'आहार' },
-  { id: '3', name: 'दवाइयां' },
-  { id: '4', name: 'सप्लीमेंट्स' },
-  { id: '5', name: 'उपकरण' },
-  { id: '6', name: 'पशु देखभाल' },
+  { id: '1', name: 'categoriesAllProducts' },
+  { id: '2', name: 'categoriesFeed' },
+  { id: '3', name: 'categoriesMedicine' },
+  { id: '4', name: 'categoriesSupplements' },
+  { id: '5', name: 'categoriesEquipment' },
+  { id: '6', name: 'categoriesCare' },
 ];
 
 const POPULAR_PRODUCTS = [
   {
     id: '1',
     name: 'प्रीमियम गाय का आहार (20 किलो)',
+    paName: 'ਪ੍ਰੀਮੀਅਮ ਗਾਂ ਦਾ ਆਹਾਰ (20 ਕਿ.)',
     price: 850,
     rating: 4,
     reviews: 34,
     description: 'हमारा प्रीमियम गाय का आहार उच्च गुणवत्ता वाले पोषक तत्वों से भरपूर है।',
+    paDescription: 'ਸਾਡਾ ਪ੍ਰੀਮੀਅਮ ਗਾਂ ਦਾ ਆਹਾਰ ਉੱਚ ਗੁਣਵੱਤਾ ਵਾਲੇ ਪੋਸ਼ਕ ਤੱਤਾਂ ਨਾਲ ਭਰਪੂਰ ਹੈ।',
     images: [
       require('../assets/1.png'),
       require('../assets/2.png'),
@@ -77,6 +83,12 @@ const POPULAR_PRODUCTS = [
       'बेहतर दूध उत्पादन में सहायता',
       'पशु स्वास्थ्य को बढ़ावा देता है'
     ],
+    paFeatures: [
+      'ਉੱਚ ਪ੍ਰੋਟੀਨ ਸਮੱਗਰੀ',
+      'ਵਿਟਾਮਿਨ ਅਤੇ ਖਨੀਜ਼ ਨਾਲ ਭਰਪੂਰ',
+      'ਵਧੀਆ ਦੁੱਧ ਉਤਪਾਦਨ ਵਿੱਚ ਮਦਦ',
+      'ਪਸ਼ੂ ਸਿਹਤ ਨੂੰ ਉਤਸ਼ਾਹਿਤ ਕਰਦਾ ਹੈ'
+    ],
     stockAvailable: true
   },
   // Add more products as needed...
@@ -86,10 +98,12 @@ const RECOMMENDED_PRODUCTS = [
   {
     id: '5',
     name: 'मिनरल ब्लॉक्स (5 किलो)',
+    paName: 'ਮਿਨਰਲ ਬਲਾਕਸ (5 ਕਿ.)',
     price: 520,
     rating: 4,
     reviews: 19,
     description: 'ये मिनरल ब्लॉक्स आपके पशुओं को आवश्यक खनिजों का निरंतर स्रोत प्रदान करते हैं।',
+    paDescription: 'ਇਹ ਮਿਨਰਲ ਬਲਾਕਸ ਤੁਹਾਡੇ ਪਸ਼ੂਆਂ ਨੂੰ ਲਾਜ਼ਮੀ ਖਨੀਜ਼ਾਂ ਦਾ ਨਿਰੰਤਰ ਸਰੋਤ ਦਿੰਦੇ ਹਨ।',
     images: [
       require('../assets/9.png'),
     ],
@@ -98,6 +112,12 @@ const RECOMMENDED_PRODUCTS = [
       'लंबे समय तक चलने वाला',
       'पशुओं के स्वाद के अनुकूल',
       'पशुशाला में आसानी से स्थापित'
+    ],
+    paFeatures: [
+      'ਲਾਜ਼ਮੀ ਖਨੀਜ਼ਾਂ ਦਾ ਮਿਸ਼ਰਣ',
+      'ਲੰਮੇ ਸਮੇਂ ਤੱਕ ਚੱਲਣ ਵਾਲਾ',
+      'ਪਸ਼ੂਆਂ ਦੇ ਸੁਆਦ ਮੁਤਾਬਕ',
+      'ਸ਼ੈੱਡ ਵਿੱਚ ਆਸਾਨੀ ਨਾਲ ਲਗੇ'
     ],
     stockAvailable: true
   },
@@ -157,13 +177,14 @@ const ImageCarousel = ({ images }: { images: any[] }) => {
 const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProps) => {
   const [addingToCart, setAddingToCart] = useState(false);
   
+  const { t } = useLanguage();
   const handleAddToCart = async (product: Product) => {
     try {
       setAddingToCart(true);
       
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert('लॉगिन आवश्यक', 'कार्ट में जोड़ने के लिए कृपया लॉगिन करें');
+        Alert.alert(t('loginRequired'), t('loginToAddToCart'));
         return;
       }
 
@@ -202,22 +223,22 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
         });
         
         Alert.alert(
-          'कार्ट में जोड़ा गया',
-          `${product.name} आपके कार्ट में जोड़ दिया गया है।`,
+          t('addedToCart'),
+          t('addedToCartMsg').replace('{product}', product.name),
           [
-            { text: 'खरीदारी जारी रखें', style: 'cancel' },
+            { text: t('continueShopping'), style: 'cancel' },
             { 
-              text: 'कार्ट देखें', 
+              text: t('viewCart'), 
               onPress: () => router.push('/cart')
             }
           ]
         );
       } else {
-        Alert.alert('त्रुटि', result.message || 'कार्ट में जोड़ने में समस्या आई');
+        Alert.alert(t('errorTitle'), result.message || 'कार्ट में जोड़ने में समस्या आई');
       }
     } catch (error) {
       console.error('Add to cart error:', error);
-      Alert.alert('त्रुटि', 'कार्ट में जोड़ने में समस्या आई');
+      Alert.alert(t('errorTitle'), 'ਕਾਰਟ ਵਿੱਚ ਜੋੜਨ ਵਿੱਚ ਸਮੱਸਿਆ ਆਈ');
     } finally {
       setAddingToCart(false);
     }
@@ -265,7 +286,7 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
       </View>
       
       <View style={styles.productDetails}>
-        <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
+        <Text style={styles.productName} numberOfLines={2}>{product.paName || product.name}</Text>
         <Text style={styles.productPrice}>₹{product.price}</Text>
         <View style={styles.productRating}>
           <View style={styles.ratingStars}>
@@ -288,11 +309,11 @@ const ProductCard = ({ product, onPress, router, setCartItems }: ProductCardProp
           {addingToCart ? (
             <>
               <ActivityIndicator size="small" color="#333" />
-              <Text style={styles.addToCartText}>जोड़ा जा रहा है...</Text>
+              <Text style={styles.addToCartText}>{t('addingToCart')}</Text>
             </>
           ) : (
             <Text style={styles.addToCartText}>
-              {product.stockAvailable ? 'कार्ट में जोड़ें' : 'स्टॉक में नहीं'}
+              {product.stockAvailable ? t('addToCart') : t('outOfStock')}
             </Text>
           )}
         </TouchableOpacity>
@@ -322,6 +343,7 @@ const CartIcon = ({ cartItems, router }: { cartItems: CartItem[], router: any })
 
 const MarketplaceScreen = () => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS]);
@@ -418,21 +440,21 @@ const MarketplaceScreen = () => {
             <TouchableOpacity onPress={() => router.back()}>
               <Icon name="arrow-left" size={24} color="#333" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>मार्केटप्लेस</Text>
+            <Text style={styles.headerTitle}>{t('marketplace')}</Text>
           </View>
           <CartIcon cartItems={cartItems} router={router} />
         </View>
 
         <ScrollView style={styles.scrollView}>
           {/* Page Title */}
-          <Text style={styles.pageTitle}>पशु आहार और दवाइयां</Text>
+          <Text style={styles.pageTitle}>{t('feedAndMeds')}</Text>
           
           {/* Search Bar */}
           <View style={styles.searchBar}>
             <Icon name="magnify" size={24} color="#999" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="आहार, दवाइयां, सप्लीमेंट्स खोजें..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -458,7 +480,7 @@ const MarketplaceScreen = () => {
                   styles.categoryText,
                   activeCategory === category.id && styles.activeCategoryText
                 ]}>
-                  {category.name}
+                  {t(category.name)}
                 </Text>
               </TouchableOpacity>
             ))}
