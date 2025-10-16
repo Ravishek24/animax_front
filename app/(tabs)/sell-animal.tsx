@@ -1,5 +1,5 @@
 // app/(tabs)/sell-animal.tsx - UPDATED VERSION
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -21,11 +21,13 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import CommonHeader from '../../components/CommonHeader';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Smart Media Compression System - Similar to WhatsApp
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import * as FileSystem from 'expo-file-system';
+import { Video as VideoCompressor } from 'react-native-compressor';
 
 // Compression configuration
 const COMPRESSION_CONFIG = {
@@ -135,8 +137,8 @@ const MediaCompressor = {
     }
   },
 
-  // Smart video compression (placeholder - would need native module for full implementation)
-  compressVideo: async (uri: string, targetSizeBytes?: number): Promise<ImagePicker.ImagePickerAsset> => {
+  // Smart video compression using react-native-compressor
+  compressVideo: async (uri: string, targetSizeBytes?: number, onProgress?: (progress: number) => void): Promise<ImagePicker.ImagePickerAsset> => {
     try {
       console.log('🎬 Starting video compression for:', uri);
       
@@ -148,8 +150,7 @@ const MediaCompressor = {
       
       const maxSize = targetSizeBytes || COMPRESSION_CONFIG.videos.maxSizeBytes;
       
-      // For now, if video is reasonable size, return as is
-      // In production, you'd use a video compression library like react-native-video-processing
+      // If video is already small enough, return as is
       if (originalSize <= maxSize) {
         console.log('✅ Video size acceptable, no compression needed');
         return {
@@ -162,16 +163,52 @@ const MediaCompressor = {
         };
       }
 
-      // For very large videos, show user options
-      console.log('⚠️ Large video detected, would compress in production app');
+      // Calculate compression settings based on file size
+      let compressionMethod = 'auto';
+      let quality = 'medium';
       
-      // This is where you'd implement actual video compression
-      // For now, we'll return the original with a warning
-      return {
+      // More aggressive compression for larger files
+      if (originalSize > 100 * 1024 * 1024) { // > 100MB
+        compressionMethod = 'auto';
+        quality = 'low';
+      } else if (originalSize > 50 * 1024 * 1024) { // > 50MB
+        compressionMethod = 'auto';
+        quality = 'medium';
+      }
+
+      console.log('⚙️ Video compression settings:', { compressionMethod, quality });
+
+      // Use react-native-compressor for real video compression
+      const compressedVideoUri = await VideoCompressor.compress(
         uri,
+        {
+          compressionMethod: compressionMethod,
+          quality: quality,
+          getCancellationId: (cancellationId) => {
+            console.log('🔄 Compression started with ID:', cancellationId);
+          },
+        },
+        (progress) => {
+          const progressPercent = Math.round(progress * 100);
+          console.log('📊 Compression progress:', progressPercent, '%');
+          if (onProgress) {
+            onProgress(progressPercent);
+          }
+        }
+      );
+
+      // Get compressed file info
+      const compressedFileInfo = await FileSystem.getInfoAsync(compressedVideoUri, { size: true });
+      const compressedSize = compressedFileInfo.exists ? (compressedFileInfo as any).size || 0 : 0;
+
+      console.log('📉 Compressed video size:', (compressedSize / 1024 / 1024).toFixed(2), 'MB');
+      console.log('📊 Compression ratio:', ((1 - compressedSize / originalSize) * 100).toFixed(1), '% reduction');
+
+      return {
+        uri: compressedVideoUri,
         type: 'video',
-        fileName: `large_video_${Date.now()}.mp4`,
-        fileSize: originalSize,
+        fileName: `compressed_video_${Date.now()}.mp4`,
+        fileSize: compressedSize,
         width: 0,
         height: 0
       };
@@ -200,6 +237,7 @@ const MediaCompressor = {
 const AnimalSellScreen = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
 
   // Form state
   const [animalType, setAnimalType] = useState('');
@@ -211,13 +249,15 @@ const AnimalSellScreen = () => {
   const [sellDuration, setSellDuration] = useState('');
   const [preferredAnimal, setPreferredAnimal] = useState('');
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
-  const [location, setLocation] = useState('Block C, Ansal Golf Links 1, Greater Noida');
+  const [location, setLocation] = useState('');
   const [showAnimalDropdown, setShowAnimalDropdown] = useState(false);
   const [showBreedDropdown, setShowBreedDropdown] = useState(false);
   const [selectedOtherAnimal, setSelectedOtherAnimal] = useState('');
   const [selectedOtherBreed, setSelectedOtherBreed] = useState('');
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState(0);
+  const [isCompressing, setIsCompressing] = useState(false);
   
   // Media state
   const [generalVideo, setGeneralVideo] = useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -226,6 +266,19 @@ const AnimalSellScreen = () => {
   
   // ScrollView ref for keyboard handling
   const scrollViewRef = useRef(null);
+
+  // Load user's address when component mounts
+  useEffect(() => {
+    if (user && user.address) {
+      // Use just the main address part (without city, state, pincode for better display)
+      // This ensures the important part (house number, street) is visible
+      const mainAddress = user.address.trim();
+      
+      if (mainAddress) {
+        setLocation(mainAddress);
+      }
+    }
+  }, [user]);
 
   const handleSubmit = async () => {
     console.log('🚀 Starting animal submission...');
@@ -271,8 +324,8 @@ const AnimalSellScreen = () => {
         preferred_animal_type: preferredAnimal,
         status: 'active',
         location_address: location,
-        location_latitude: null, // Optional
-        location_longitude: null, // Optional
+        location_latitude: user?.latitude || null, // Use user's coordinates
+        location_longitude: user?.longitude || null, // Use user's coordinates
         additional_info: additionalInfo || null
       };
 
@@ -489,7 +542,11 @@ const AnimalSellScreen = () => {
         let processedMedia: ImagePicker.ImagePickerAsset;
         
         if (type === 'video') {
-          processedMedia = await MediaCompressor.compressVideo(media.uri);
+          setIsCompressing(true);
+          setCompressionProgress(0);
+          processedMedia = await MediaCompressor.compressVideo(media.uri, undefined, setCompressionProgress);
+          setIsCompressing(false);
+          setCompressionProgress(0);
         } else {
           processedMedia = await MediaCompressor.compressImage(media.uri);
         }
@@ -565,7 +622,11 @@ const AnimalSellScreen = () => {
           let processedMedia: ImagePicker.ImagePickerAsset;
           
           if (type === 'video') {
-            processedMedia = await MediaCompressor.compressVideo(media.uri);
+            setIsCompressing(true);
+            setCompressionProgress(0);
+            processedMedia = await MediaCompressor.compressVideo(media.uri, undefined, setCompressionProgress);
+            setIsCompressing(false);
+            setCompressionProgress(0);
           } else {
             processedMedia = await MediaCompressor.compressImage(media.uri);
           }
@@ -852,14 +913,6 @@ const AnimalSellScreen = () => {
           <Text style={styles.unitText}>रुपए</Text>
         </View>
       </View>
-      
-      {/* Price Check Feature */}
-      <TouchableOpacity style={styles.priceCheckButton}>
-        <Icon name="information" size={20} color="#2196F3" />
-        <Text style={styles.priceCheckText}>इस पशु का सही रेट जानें</Text>
-        <Text style={styles.checkText}>चेक करें</Text>
-        <Icon name="arrow-right" size={16} color="#2196F3" />
-      </TouchableOpacity>
     </View>
   );
 
@@ -1074,6 +1127,8 @@ const AnimalSellScreen = () => {
           value={location}
           onChangeText={setLocation}
           placeholder="Enter location"
+          textAlignVertical="center"
+          multiline={false}
         />
         <TouchableOpacity style={styles.changeLocationButton}>
           <Text style={styles.changeLocationText}>बदलें</Text>
@@ -1136,10 +1191,6 @@ const AnimalSellScreen = () => {
             {/* Page Title */}
             <View style={styles.pageHeader}>
               <Text style={styles.pageTitle}>पशु बेचें</Text>
-              <TouchableOpacity style={styles.myAnimalsButton}>
-                <Text style={styles.myAnimalsText}>मेरे पशु</Text>
-                <Icon name="chevron-right" size={16} color="#990906" />
-              </TouchableOpacity>
             </View>
 
             {/* Free Listing Banner */}
@@ -1156,6 +1207,18 @@ const AnimalSellScreen = () => {
             {renderSellDurationSection()}
             {renderPreferredAnimalSection()}
             {renderMediaSection()}
+            
+            {/* Video Compression Progress */}
+            {isCompressing && (
+              <View style={styles.compressionProgressContainer}>
+                <Text style={styles.compressionProgressText}>
+                  वीडियो कंप्रेस हो रहा है... {compressionProgress}%
+                </Text>
+                <View style={styles.progressBarContainer}>
+                  <View style={[styles.progressBar, { width: `${compressionProgress}%` }]} />
+                </View>
+              </View>
+            )}
             {renderAdditionalInfoSection()}
             {renderLocationSection()}
             
@@ -1193,15 +1256,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-  },
-  myAnimalsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  myAnimalsText: {
-    color: '#990906',
-    fontWeight: 'bold',
-    marginRight: 4,
   },
   freeBanner: {
     flexDirection: 'row',
@@ -1305,26 +1359,6 @@ const styles = StyleSheet.create({
   unitText: {
     color: '#666',
     fontWeight: '500',
-  },
-  priceCheckButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  priceCheckText: {
-    flex: 1,
-    marginLeft: 8,
-    color: '#2196F3',
-    fontWeight: '500',
-  },
-  checkText: {
-    color: '#2196F3',
-    fontWeight: 'bold',
-    marginRight: 8,
   },
   mediaGrid: {
     flexDirection: 'row',
@@ -1487,6 +1521,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    height: 48,
+    textAlignVertical: 'center',
   },
   changeLocationButton: {
     backgroundColor: '#fff',
@@ -1575,6 +1611,34 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 20,
+  },
+  
+  // Video Compression Progress Styles
+  compressionProgressContainer: {
+    backgroundColor: '#f0f8ff',
+    padding: 16,
+    margin: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  compressionProgressText: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
+    borderRadius: 4,
   },
 });
 

@@ -13,8 +13,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services';
+import { googlePlacesService } from '../services/googlePlacesService';
 
 interface ProfileFormData {
   full_name: string;

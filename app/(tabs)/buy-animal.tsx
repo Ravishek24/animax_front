@@ -13,6 +13,10 @@ import {
   RefreshControl,
   Image,
   Dimensions,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -21,6 +25,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { apiService } from '../../services';
 import CommonHeader from '../../components/CommonHeader';
+import { useAuth } from '../../contexts/AuthContext';
+import { googlePlacesService } from '../../services/googlePlacesService';
 
 const { width } = Dimensions.get('window');
 
@@ -78,6 +84,7 @@ const PAGE_SIZE = 20;
 const BuyAnimalsScreen = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'cow' | 'buffalo' | 'other'>('all');
   const [nearbyOnly, setNearbyOnly] = useState(true);
@@ -89,6 +96,17 @@ const BuyAnimalsScreen = () => {
   const [hasMore, setHasMore] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<AnimalMedia | null>(null);
   const [showMediaModal, setShowMediaModal] = useState(false);
+  
+  // Location selection states
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    address: string;
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [loadingLocationSuggestions, setLoadingLocationSuggestions] = useState(false);
 
   const categories: Category[] = [
     { id: '1', name: 'सभी', emoji: '🐄', key: 'all' },
@@ -111,7 +129,8 @@ const BuyAnimalsScreen = () => {
     pageNum: number = 1,
     category: string = selectedCategory,
     nearby: boolean = nearbyOnly,
-    reset: boolean = false
+    reset: boolean = false,
+    location?: { address: string; latitude: number; longitude: number }
   ) => {
     setLoading(true);
     try {
@@ -122,6 +141,18 @@ const BuyAnimalsScreen = () => {
         limit: PAGE_SIZE.toString(),
         nearby: nearby ? 'true' : 'false'
       };
+      
+      // Add location coordinates if provided
+      if (location) {
+        params.latitude = location.latitude.toString();
+        params.longitude = location.longitude.toString();
+        params.radius = '200'; // 200km radius
+      } else if (nearby && user?.latitude && user?.longitude) {
+        // Use user's location if no specific location provided
+        params.latitude = user.latitude.toString();
+        params.longitude = user.longitude.toString();
+        params.radius = '200'; // 200km radius
+      }
       
       // Add category filter if not 'all'
       if (category !== 'all') {
@@ -182,6 +213,77 @@ const BuyAnimalsScreen = () => {
     const newNearby = !nearbyOnly;
     setNearbyOnly(newNearby);
     loadAnimals(1, selectedCategory, newNearby, true);
+  };
+
+  // Location search functions
+  const searchLocation = async (query: string) => {
+    if (query.length < 3) {
+      setLocationSuggestions([]);
+      return;
+    }
+
+    setLoadingLocationSuggestions(true);
+    try {
+      const suggestions = await googlePlacesService.searchPlaces(query, {
+        language: 'hi',
+        components: 'country:in',
+        types: 'address'
+      });
+      
+      if (suggestions.predictions) {
+        setLocationSuggestions(suggestions.predictions);
+      }
+    } catch (error) {
+      console.error('Location search error:', error);
+      setLocationSuggestions([]);
+    } finally {
+      setLoadingLocationSuggestions(false);
+    }
+  };
+
+  const selectLocation = async (suggestion: any) => {
+    try {
+      const details = await googlePlacesService.getPlaceDetails(suggestion.place_id);
+      
+      if (details.geometry && details.geometry.location) {
+        const newLocation = {
+          address: details.formatted_address,
+          latitude: details.geometry.location.lat,
+          longitude: details.geometry.location.lng
+        };
+        
+        setSelectedLocation(newLocation);
+        setLocationQuery(details.formatted_address);
+        setLocationSuggestions([]);
+        setShowLocationModal(false);
+        
+        // Reload animals with new location
+        setPage(1);
+        setHasMore(true);
+        loadAnimals(1, selectedCategory, true, true, newLocation);
+      }
+    } catch (error) {
+      console.error('Location details error:', error);
+    }
+  };
+
+  const useCurrentLocation = () => {
+    if (user?.latitude && user?.longitude) {
+      const currentLocation = {
+        address: user.address || 'Current Location',
+        latitude: user.latitude,
+        longitude: user.longitude
+      };
+      
+      setSelectedLocation(currentLocation);
+      setLocationQuery(user.address || 'Current Location');
+      setShowLocationModal(false);
+      
+      // Reload animals with current location
+      setPage(1);
+      setHasMore(true);
+      loadAnimals(1, selectedCategory, true, true, currentLocation);
+    }
   };
 
   const handleCall = (phone: string, sellerName: string) => {
@@ -551,11 +653,11 @@ const BuyAnimalsScreen = () => {
           <Text style={styles.headerTitle}>पशु खरीदें</Text>
           <TouchableOpacity
             style={[styles.nearbyButton, nearbyOnly && styles.nearbyButtonActive]}
-            onPress={toggleNearby}
+            onPress={() => setShowLocationModal(true)}
           >
             <Icon name="map-marker" size={20} color={nearbyOnly ? "#fff" : "#666"} />
             <Text style={[styles.nearbyText, nearbyOnly && styles.nearbyTextActive]}>
-              पास के
+              {selectedLocation ? 'पास के' : 'पास के'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -632,6 +734,79 @@ const BuyAnimalsScreen = () => {
             </View>
           </View>
         )}
+
+        {/* Location Selection Modal */}
+        <Modal
+          visible={showLocationModal}
+          animationType="fade"
+          transparent={true}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalPopup}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>जगह चुनें</Text>
+                <TouchableOpacity
+                  onPress={() => setShowLocationModal(false)}
+                  style={styles.modalCloseButton}
+                >
+                  <Icon name="close" size={20} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalContent}>
+                {/* Current Location Button */}
+                <TouchableOpacity
+                  style={styles.currentLocationButton}
+                  onPress={useCurrentLocation}
+                >
+                  <Icon name="crosshairs-gps" size={18} color="#990906" />
+                  <Text style={styles.currentLocationText}>मेरी जगह</Text>
+                </TouchableOpacity>
+
+                {/* Search Input */}
+                <View style={styles.searchContainer}>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="जगह खोजें..."
+                    value={locationQuery}
+                    onChangeText={(text) => {
+                      setLocationQuery(text);
+                      searchLocation(text);
+                    }}
+                  />
+                </View>
+
+                {/* Location Suggestions */}
+                {locationSuggestions.length > 0 && (
+                  <ScrollView style={styles.suggestionsContainer}>
+                    {locationSuggestions.map((suggestion, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.suggestionItem}
+                        onPress={() => selectLocation(suggestion)}
+                      >
+                        <Icon name="map-marker" size={14} color="#666" />
+                        <Text style={styles.suggestionText}>
+                          {suggestion.description}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+
+                {/* Selected Location Display */}
+                {selectedLocation && (
+                  <View style={styles.selectedLocationContainer}>
+                    <Text style={styles.selectedLocationLabel}>चुनी गई जगह:</Text>
+                    <Text style={styles.selectedLocationText}>
+                      {selectedLocation.address}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -990,6 +1165,111 @@ const styles = StyleSheet.create({
   modalVideo: {
     width: '100%',
     height: '100%',
+  },
+  
+  // Location Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalPopup: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '70%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalContent: {
+    padding: 16,
+  },
+  currentLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  currentLocationText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#990906',
+    fontWeight: '500',
+  },
+  searchContainer: {
+    marginBottom: 16,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  suggestionsContainer: {
+    maxHeight: 150,
+    marginBottom: 12,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  suggestionText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+  },
+  selectedLocationContainer: {
+    backgroundColor: '#f0f8f0',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  selectedLocationLabel: {
+    fontSize: 12,
+    color: '#4CAF50',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  selectedLocationText: {
+    fontSize: 14,
+    color: '#333',
   },
 });
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAuth } from '../contexts/AuthContext';
@@ -116,19 +116,29 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Icon name="account-circle" size={64} color="#990906" style={{ marginBottom: 12 }} />
-        <Text style={styles.title}>{otpSent ? 'OTP सत्यापन' : 'लॉगिन करें'}</Text>
-        <Text style={styles.subtitle}>
-          {otpSent 
-            ? 'अपने मोबाइल पर भेजे गए OTP को दर्ज करें'
-            : 'मोबाइल नंबर दर्ज करें और OTP प्राप्त करें'
-          }
-        </Text>
-      </View>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+      >
+        <View style={styles.header}>
+          <Icon name="account-circle" size={64} color="#990906" style={{ marginBottom: 12 }} />
+          <Text style={styles.title}>{otpSent ? 'OTP सत्यापन' : 'लॉगिन करें'}</Text>
+          <Text style={styles.subtitle}>
+            {otpSent 
+              ? 'अपने मोबाइल पर भेजे गए OTP को दर्ज करें'
+              : 'मोबाइल नंबर दर्ज करें और OTP प्राप्त करें'
+            }
+          </Text>
+        </View>
 
-      <View style={styles.form}>
+        <View style={styles.form}>
         {!otpSent ? (
           <>
             <Text style={styles.label}>मोबाइल नंबर</Text>
@@ -163,8 +173,6 @@ const LoginScreen = () => {
           </>
         )}
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={otpSent ? handleVerifyOTP : handleSendOTP}
@@ -178,8 +186,33 @@ const LoginScreen = () => {
             </Text>
           )}
         </TouchableOpacity>
-      </View>
-    </View>
+        </View>
+
+        {/* Error Modal */}
+        <Modal
+          visible={!!error}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setError('')}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.errorModal}>
+              <View style={styles.errorIconContainer}>
+                <Icon name="alert-circle" size={48} color="#ff4444" />
+              </View>
+              <Text style={styles.errorModalTitle}>Error</Text>
+              <Text style={styles.errorModalText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.errorModalButton}
+                onPress={() => setError('')}
+              >
+                <Text style={styles.errorModalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -187,9 +220,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    paddingVertical: 20,
+    paddingBottom: 100, // Extra padding for keyboard
   },
   header: {
     alignItems: 'center',
@@ -278,10 +316,57 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  error: {
-    color: '#990906',
-    marginBottom: 8,
-    alignSelf: 'flex-start',
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorModal: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    minWidth: 280,
+    maxWidth: '90%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  errorIconContainer: {
+    marginBottom: 16,
+  },
+  errorModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ff4444',
+    marginBottom: 12,
+  },
+  errorModalText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  errorModalButton: {
+    backgroundColor: '#ff4444',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 100,
+  },
+  errorModalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

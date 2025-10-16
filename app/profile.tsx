@@ -26,7 +26,6 @@ const ProfileScreen = () => {
   const animalsListed = stats.animalsListed ?? 0;
   const callsMade = stats.callsMade ?? 0;
   const monthsConnected = stats.monthsConnected ?? 0;
-  const coins = stats.coins ?? 0;
   const completionPercent = typeof stats.completionPercent === 'number' ? stats.completionPercent : 0;
   const incompletePercent = Math.max(0, 100 - completionPercent);
 
@@ -188,34 +187,11 @@ const ProfileScreen = () => {
               <Text style={styles.completionTitleText}>
                 {t('yourProfile')} <Text style={styles.percentText}>{incompletePercent}% {t('incomplete')}</Text> {t('isWord')}
               </Text>
-              <Text style={styles.completionDescription}>
-                {t('completeProfileEarn')} <Icon name="circle" size={12} color="#f9ca1b" /> 10 {t('coinsWord')}
-              </Text>
             </View>
           </View>
           
           <TouchableOpacity style={styles.completeButton}>
             <Text style={styles.completeButtonText}>{t('completeNow')}</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Wallet Section */}
-        <View style={styles.walletContainer}>
-          <View style={styles.walletHeader}>
-            <View style={styles.walletTitleContainer}>
-              <Icon name="wallet" size={24} color="#f9ca1b" />
-              <Text style={styles.walletTitle}>{t('wallet')}</Text>
-            </View>
-            
-            <View style={styles.coinContainer}>
-              <Icon name="circle" size={20} color="#f9ca1b" />
-              <Text style={styles.coinCount}>{coins}</Text>
-            </View>
-          </View>
-          
-          <TouchableOpacity style={styles.walletButton}>
-            <Text style={styles.walletButtonText}>{t('viewWallet')}</Text>
-            <Icon name="chevron-right" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
         
@@ -488,53 +464,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  walletContainer: {
-    margin: 16,
-    marginTop: 0,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  walletHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  walletTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  walletTitle: {
-    marginLeft: 8,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  coinContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  coinCount: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  walletButton: {
-    backgroundColor: '#990906',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 12,
-  },
-  walletButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginRight: 4,
   },
   animalsContainer: {
     flexDirection: 'row',

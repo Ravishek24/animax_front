@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -9,11 +9,15 @@ import {
   Alert,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  TouchableWithoutFeedback,
+  Modal
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+// import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../contexts/AuthContext';
+import { googlePlacesService } from '../services/googlePlacesService';
 import { apiService } from '../services';
 
 const RegisterScreen = () => {
@@ -23,6 +27,7 @@ const RegisterScreen = () => {
   const { sessionUuid, phoneNumber } = params;
   const [fullName, setFullName] = useState('');
   const [address, setAddress] = useState('');
+  const [houseAddress, setHouseAddress] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
@@ -30,8 +35,101 @@ const RegisterScreen = () => {
   const [longitude, setLongitude] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [googleApiKey, setGoogleApiKey] = useState<string | null>(null);
+  const [loadingGooglePlaces, setLoadingGooglePlaces] = useState(true);
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
+  // Fetch Google Places API key when component mounts
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        setLoadingGooglePlaces(true);
+        const apiKey = await googlePlacesService.getApiKey();
+        setGoogleApiKey(apiKey);
+      } catch (error) {
+        console.error('❌ Failed to fetch Google Places API key:', error);
+      } finally {
+        setLoadingGooglePlaces(false);
+      }
+    };
 
+    fetchApiKey();
+  }, []);
+
+  // Search for address suggestions
+  const searchAddresses = async (query: string) => {
+    if (query.length < 2) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    try {
+      const result = await googlePlacesService.searchPlaces(query);
+      if (result.success && result.predictions) {
+        setAddressSuggestions(result.predictions);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Address search error:', error);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  // Handle address selection
+  const selectAddress = async (prediction: any) => {
+    setAddress(prediction.description);
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+    
+    // Get place details for address components
+    try {
+      const details = await googlePlacesService.getPlaceDetails(prediction.place_id);
+      if (details.success && details.details) {
+        const placeDetails = details.details;
+        
+        // Extract address components
+        if (placeDetails.address_components && Array.isArray(placeDetails.address_components)) {
+          // Extract city
+          const cityComponent = placeDetails.address_components.find(
+            component => component.types && component.types.includes('locality') || 
+                         component.types && component.types.includes('administrative_area_level_2')
+          );
+          if (cityComponent) {
+            setCity(cityComponent.long_name);
+          }
+          
+          // Extract state
+          const stateComponent = placeDetails.address_components.find(
+            component => component.types && component.types.includes('administrative_area_level_1')
+          );
+          if (stateComponent) {
+            setState(stateComponent.long_name);
+          }
+          
+          // Extract pincode
+          const pincodeComponent = placeDetails.address_components.find(
+            component => component.types && component.types.includes('postal_code')
+          );
+          if (pincodeComponent) {
+            setPincode(pincodeComponent.long_name);
+          }
+          
+          // Extract coordinates
+          if (placeDetails.geometry && placeDetails.geometry.location) {
+            setLatitude(placeDetails.geometry.location.lat);
+            setLongitude(placeDetails.geometry.location.lng);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error getting place details:', error);
+    }
+  };
 
   const handleRegister = async () => {
     setError('');
@@ -46,8 +144,33 @@ const RegisterScreen = () => {
       return;
     }
 
+    if (!houseAddress.trim()) {
+      setError('कृपया घर नंबर दर्ज करें');
+      return;
+    }
+
     if (!address.trim()) {
-      setError('कृपया अपना पता दर्ज करें');
+      setError('कृपया अपना लोकेशन/इलाका दर्ज करें');
+      return;
+    }
+
+    if (!city.trim()) {
+      setError('कृपया शहर दर्ज करें');
+      return;
+    }
+
+    if (!state.trim()) {
+      setError('कृपया राज्य दर्ज करें');
+      return;
+    }
+
+    if (!pincode.trim()) {
+      setError('कृपया पिन कोड दर्ज करें');
+      return;
+    }
+
+    if (pincode.trim().length !== 6) {
+      setError('पिन कोड 6 अंक का होना चाहिए');
       return;
     }
 
@@ -56,7 +179,7 @@ const RegisterScreen = () => {
       const userData = {
         sessionUuid: typeof sessionUuid === 'string' ? sessionUuid : Array.isArray(sessionUuid) ? sessionUuid[0] : '',
         fullName: fullName.trim(),
-        address: address.trim(),
+        address: `${houseAddress.trim()}, ${address.trim()}`,
         city: city.trim(),
         state: state.trim(),
         pincode: pincode.trim(),
@@ -94,10 +217,13 @@ const RegisterScreen = () => {
     <KeyboardAvoidingView 
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
       >
         <View style={styles.header}>
           <Icon name="account-plus" size={64} color="#990906" style={{ marginBottom: 12 }} />
@@ -110,8 +236,9 @@ const RegisterScreen = () => {
           </Text>
         </View>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>पूरा नाम *</Text>
+        <TouchableWithoutFeedback onPress={() => setShowSuggestions(false)}>
+          <View style={styles.form}>
+            <Text style={styles.label}>पूरा नाम *</Text>
           <TextInput
             style={styles.input}
             value={fullName}
@@ -122,52 +249,118 @@ const RegisterScreen = () => {
             autoCorrect={false}
           />
 
-          <Text style={styles.label}>पता *</Text>
+          <Text style={styles.label}>घर नंबर *</Text>
           <TextInput
             style={styles.input}
-            value={address}
-            onChangeText={setAddress}
-            placeholder="अपना पूरा पता दर्ज करें"
+            value={houseAddress}
+            onChangeText={setHouseAddress}
+            placeholder="घर नंबर दर्ज करें"
             placeholderTextColor="#bbb"
-            multiline={true}
-            numberOfLines={3}
-            textAlignVertical="top"
+            multiline={false}
+            textAlignVertical="center"
+            editable={true}
           />
 
+          <Text style={styles.label}>पता *</Text>
+          {loadingGooglePlaces ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#990906" style={{ marginRight: 8 }} />
+              <Text style={styles.loadingText}>Google Places लोड हो रहा है...</Text>
+            </View>
+          ) : googleApiKey && googleApiKey !== 'BACKEND_SEARCH' ? (
+            <View style={styles.addressContainer}>
+              <TextInput
+                style={[styles.input, styles.addressInput]}
+                value={address}
+                onChangeText={(text) => {
+                  setAddress(text);
+                  searchAddresses(text);
+                }}
+                placeholder="अपना पूरा पता दर्ज करें"
+                placeholderTextColor="#bbb"
+                multiline={false}
+                textAlignVertical="center"
+                editable={true}
+              />
+              {loadingSuggestions && (
+                <Text style={styles.loadingText}>सुझाव खोज रहे हैं...</Text>
+              )}
+              {showSuggestions && addressSuggestions.length > 0 && (
+                <ScrollView style={styles.suggestionsContainer} nestedScrollEnabled={true}>
+                  {addressSuggestions.map((suggestion, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.suggestionItem}
+                      onPress={() => selectAddress(suggestion)}
+                    >
+                      <Text style={styles.suggestionText}>{suggestion.description}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          ) : googleApiKey === 'BACKEND_SEARCH' ? (
+            <View style={styles.addressContainer}>
+              <TextInput
+                style={[styles.input, styles.addressInput]}
+                value={address}
+                onChangeText={setAddress}
+                placeholder="अपना पूरा पता दर्ज करें"
+                placeholderTextColor="#bbb"
+                multiline={false}
+                textAlignVertical="center"
+                editable={true}
+              />
+              <Text style={styles.infoText}>
+                💡 पता टाइप करें और शहर, राज्य, पिन कोड स्वतः भर जाएगा
+              </Text>
+            </View>
+          ) : (
+            <TextInput
+              style={[styles.input, styles.addressInput]}
+              value={address}
+              onChangeText={setAddress}
+              placeholder="अपना पूरा पता दर्ज करें"
+              placeholderTextColor="#bbb"
+              multiline={false}
+              textAlignVertical="center"
+              editable={true}
+            />
+          )}
+
           <View style={styles.addressDetails}>
-            <Text style={styles.label}>शहर</Text>
+            <Text style={styles.label}>शहर *</Text>
             <TextInput
               style={styles.input}
               value={city}
               onChangeText={setCity}
               placeholder="शहर"
               placeholderTextColor="#bbb"
-              editable={false}
+              editable={true}
             />
 
-            <Text style={styles.label}>राज्य</Text>
+            <Text style={styles.label}>राज्य *</Text>
             <TextInput
               style={styles.input}
               value={state}
               onChangeText={setState}
               placeholder="राज्य"
               placeholderTextColor="#bbb"
-              editable={false}
+              editable={true}
             />
 
-            <Text style={styles.label}>पिन कोड</Text>
+            <Text style={styles.label}>पिन कोड *</Text>
             <TextInput
               style={styles.input}
               value={pincode}
               onChangeText={setPincode}
               placeholder="पिन कोड"
               placeholderTextColor="#bbb"
-              editable={false}
+              editable={true}
               keyboardType="numeric"
+              maxLength={6}
             />
           </View>
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -184,7 +377,32 @@ const RegisterScreen = () => {
           <TouchableOpacity onPress={handleBackToLogin} style={styles.backButton}>
             <Text style={styles.backText}>वापस लॉगिन पर जाएं</Text>
           </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableWithoutFeedback>
+
+        {/* Error Modal */}
+        <Modal
+          visible={!!error}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setError('')}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.errorModal}>
+              <View style={styles.errorIconContainer}>
+                <Icon name="alert-circle" size={48} color="#ff4444" />
+              </View>
+              <Text style={styles.errorModalTitle}>Error</Text>
+              <Text style={styles.errorModalText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.errorModalButton}
+                onPress={() => setError('')}
+              >
+                <Text style={styles.errorModalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -201,6 +419,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 20,
+    paddingBottom: 100, // Extra padding for keyboard
   },
   header: {
     alignItems: 'center',
@@ -250,6 +469,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     minHeight: 50,
   },
+  addressInput: {
+    minHeight: 50, // Same height as other input fields
+    height: 50, // Fixed height to match other fields
+    width: '100%', // Ensure full width like other fields
+    paddingTop: 0, // Remove extra top padding
+    paddingBottom: 0, // Remove extra bottom padding
+    justifyContent: 'center', // Center content vertically
+  },
+  addressContainer: {
+    width: '100%', // Ensure container takes full width
+  },
   addressDetails: {
     width: '100%',
     marginBottom: 12,
@@ -278,10 +508,102 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textDecorationLine: 'underline',
   },
-  error: {
-    color: '#990906',
-    marginBottom: 8,
-    alignSelf: 'flex-start',
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    backgroundColor: '#fafafa',
+    marginBottom: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  suggestionsContainer: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderTopWidth: 0,
+    borderRadius: 8,
+    marginTop: -8,
+    maxHeight: 150, // Reduced height to prevent going off-screen
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    zIndex: 1000, // Ensure it appears above other elements
+  },
+  suggestionItem: {
+    padding: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  suggestionText: {
+    fontSize: 16,
+    color: '#222',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorModal: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    minWidth: 280,
+    maxWidth: '90%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  errorIconContainer: {
+    marginBottom: 16,
+  },
+  errorModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ff4444',
+    marginBottom: 12,
+  },
+  errorModalText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  errorModalButton: {
+    backgroundColor: '#ff4444',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 100,
+  },
+  errorModalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

@@ -68,9 +68,6 @@ class ApiService {
         ...options,
       };
 
-      console.log(`🌐 API Request: ${config.method} ${url}`);
-      console.log(`📋 Request Headers:`, headers);
-      console.log(`📦 Request Body:`, config.body);
       
       // Simple fetch without timeout (server responds quickly)
       const response = await fetch(url, config);
@@ -89,7 +86,6 @@ class ApiService {
       
       const data: ApiResponse<T> = await response.json();
 
-      console.log(`📥 API Response: ${response.status}`, data);
 
       if (!response.ok) {
         throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
