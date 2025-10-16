@@ -27,7 +27,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import * as FileSystem from 'expo-file-system';
-// import { Video as VideoCompressor } from 'react-native-compressor';
+import { Video as VideoCompressor } from 'react-native-compressor';
 
 // Compression configuration
 const COMPRESSION_CONFIG = {
@@ -137,7 +137,7 @@ const MediaCompressor = {
     }
   },
 
-  // Smart video compression using expo-av (Expo Go compatible)
+  // Smart video compression using react-native-compressor (Production)
   compressVideo: async (uri: string, targetSizeBytes?: number, onProgress?: (progress: number) => void): Promise<ImagePicker.ImagePickerAsset> => {
     try {
       console.log('🎬 Starting video compression for:', uri);
@@ -163,23 +163,52 @@ const MediaCompressor = {
         };
       }
 
-      // For Expo Go compatibility, we'll use a different approach
-      // Since we can't use react-native-compressor, we'll provide user guidance
-      console.log('⚠️ Large video detected - compression not available in Expo Go');
-      console.log('💡 For production, use development build with react-native-compressor');
+      // Calculate compression settings based on file size
+      let compressionMethod = 'auto';
+      let quality = 'medium';
       
-      // Show progress to user
-      if (onProgress) {
-        onProgress(50); // Simulate progress
-        setTimeout(() => onProgress(100), 1000);
+      // More aggressive compression for larger files
+      if (originalSize > 100 * 1024 * 1024) { // > 100MB
+        compressionMethod = 'auto';
+        quality = 'low';
+      } else if (originalSize > 50 * 1024 * 1024) { // > 50MB
+        compressionMethod = 'auto';
+        quality = 'medium';
       }
 
-      // Return original video with a warning
-      return {
+      console.log('⚙️ Video compression settings:', { compressionMethod, quality });
+
+      // Use react-native-compressor for real video compression
+      const compressedVideoUri = await VideoCompressor.compress(
         uri,
+        {
+          compressionMethod: compressionMethod,
+          quality: quality,
+          getCancellationId: (cancellationId) => {
+            console.log('🔄 Compression started with ID:', cancellationId);
+          },
+        },
+        (progress) => {
+          const progressPercent = Math.round(progress * 100);
+          console.log('📊 Compression progress:', progressPercent, '%');
+          if (onProgress) {
+            onProgress(progressPercent);
+          }
+        }
+      );
+
+      // Get compressed file info
+      const compressedFileInfo = await FileSystem.getInfoAsync(compressedVideoUri, { size: true });
+      const compressedSize = compressedFileInfo.exists ? (compressedFileInfo as any).size || 0 : 0;
+
+      console.log('📉 Compressed video size:', (compressedSize / 1024 / 1024).toFixed(2), 'MB');
+      console.log('📊 Compression ratio:', ((1 - compressedSize / originalSize) * 100).toFixed(1), '% reduction');
+
+      return {
+        uri: compressedVideoUri,
         type: 'video',
-        fileName: `large_video_${Date.now()}.mp4`,
-        fileSize: originalSize,
+        fileName: `compressed_video_${Date.now()}.mp4`,
+        fileSize: compressedSize,
         width: 0,
         height: 0
       };
