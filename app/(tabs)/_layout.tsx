@@ -7,7 +7,15 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function TabLayout() {
-  const { t } = useLanguage();
+  let t;
+  try {
+    const languageContext = useLanguage();
+    t = languageContext.t;
+  } catch (error) {
+    // Fallback if language context is not available
+    t = (key: string) => key;
+  }
+  
   return (
     <ProtectedRoute>
       <Tabs

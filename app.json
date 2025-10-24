@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Pahsupalak",
+    "slug": "Pahsupalak",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/4_2.png",
-    "scheme": "frontend",
+    "scheme": "exp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/4_2.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,

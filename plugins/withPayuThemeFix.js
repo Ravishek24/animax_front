@@ -10,6 +10,9 @@ const withPayuThemeFix = (config) => {
     // Add tools:replace attribute to handle PayU theme conflict
     if (application && application.$) {
       application.$['tools:replace'] = 'android:theme';
+    } else if (application) {
+      // If $ doesn't exist, create it
+      application.$ = { 'tools:replace': 'android:theme' };
     }
     
     return config;

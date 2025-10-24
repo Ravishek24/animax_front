@@ -5,7 +5,6 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Platform, View, StyleSheet } from 'react-native';
-import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { AuthProvider } from '../contexts/AuthContext';
