@@ -4,10 +4,15 @@
     "slug": "Pahsupalak",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/4_2.png",
+    "icon": "./assets/adaptive-icon.png",
     "scheme": "exp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "supportsTablet": true,
       "statusBarStyle": "light",
@@ -19,7 +24,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/4_2.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -32,7 +38,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/4_2.png`"
+      "favicon": "./assets/adaptive-icon.png"
     },
     "plugins": [
       "expo-router",
@@ -41,7 +47,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/4_2.png",
+          "image": "./assets/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

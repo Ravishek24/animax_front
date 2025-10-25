@@ -22,7 +22,7 @@ import { useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import Video from 'react-native-video';
 import { apiService } from '../../services';
 import CommonHeader from '../../components/CommonHeader';
 import { useAuth } from '../../contexts/AuthContext';
@@ -96,6 +96,9 @@ const BuyAnimalsScreen = () => {
   const [hasMore, setHasMore] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<AnimalMedia | null>(null);
   const [showMediaModal, setShowMediaModal] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
   
   // Location selection states
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -312,13 +315,18 @@ const BuyAnimalsScreen = () => {
   };
 
   const handleMediaPress = (media: AnimalMedia) => {
+    console.log('🎬 Opening media modal:', media.media_type, media.media_url);
     setSelectedMedia(media);
     setShowMediaModal(true);
+    setVideoPaused(true);
   };
 
   const closeMediaModal = () => {
+    setVideoPaused(true);
     setShowMediaModal(false);
     setSelectedMedia(null);
+    setVideoProgress(0);
+    setVideoDuration(0);
   };
 
   const getPrimaryImage = (animal: Animal): string => {
@@ -458,10 +466,11 @@ const BuyAnimalsScreen = () => {
                     <Video
                       source={{ uri: item.media[0].media_url }}
                       style={styles.mainMedia}
-                      resizeMode={ResizeMode.COVER}
-                      shouldPlay={false}
-                      isMuted={true}
-                      isLooping={false}
+                      resizeMode="cover"
+                      paused={true}
+                      muted={true}
+                      repeat={false}
+                      controls={false}
                     />
                   ) : (
                     <Image
@@ -472,7 +481,7 @@ const BuyAnimalsScreen = () => {
                   )}
                  {item.media[0].media_type?.includes('video') && (
                    <View style={styles.playButton}>
-                     <Icon name="play" size={24} color="#fff" />
+                     <Icon name="play" size={28} color="#990906" />
                    </View>
                  )}
                  {item.is_negotiable && (
@@ -495,10 +504,11 @@ const BuyAnimalsScreen = () => {
                           <Video
                             source={{ uri: media.media_url }}
                             style={styles.sideMedia}
-                            resizeMode={ResizeMode.COVER}
-                            shouldPlay={false}
-                            isMuted={true}
-                            isLooping={false}
+                            resizeMode="cover"
+                            paused={true}
+                            muted={true}
+                            repeat={false}
+                            controls={false}
                           />
                         ) : (
                           <Image
@@ -509,7 +519,7 @@ const BuyAnimalsScreen = () => {
                         )}
                        {media.media_type?.includes('video') && (
                          <View style={styles.sidePlayButton}>
-                           <Icon name="play" size={16} color="#fff" />
+                           <Icon name="play" size={18} color="#990906" />
                          </View>
                        )}
                      </TouchableOpacity>
@@ -705,35 +715,93 @@ const BuyAnimalsScreen = () => {
         )}
 
         {/* Media Modal */}
-        {showMediaModal && selectedMedia && (
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+        <Modal
+          visible={showMediaModal && !!selectedMedia}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={closeMediaModal}
+        >
+          <View style={styles.mediaModalOverlay}>
+            <TouchableOpacity 
+              style={styles.mediaModalBackdrop}
+              activeOpacity={1}
+              onPress={closeMediaModal}
+            />
+            <View style={styles.mediaModalContent}>
               <TouchableOpacity 
                 style={styles.closeButton}
                 onPress={closeMediaModal}
               >
-                <Icon name="close" size={24} color="#fff" />
+                <Icon name="close" size={20} color="#fff" />
               </TouchableOpacity>
               
-                             {selectedMedia.media_type?.includes('video') ? (
-                 <Video
-                   source={{ uri: selectedMedia.media_url }}
-                   style={styles.modalVideo}
-                   useNativeControls
-                   resizeMode={ResizeMode.CONTAIN}
-                   isLooping={false}
-                   shouldPlay={true}
-                 />
-               ) : (
-                 <Image
-                   source={{ uri: selectedMedia.media_url }}
-                   style={styles.modalImage}
-                   resizeMode="contain"
-                 />
-               )}
+              {selectedMedia?.media_type?.includes('video') ? (
+                <View style={styles.modalVideoContainer}>
+                  <Video
+                    source={{ uri: selectedMedia.media_url }}
+                    style={styles.modalVideo}
+                    resizeMode="contain"
+                    paused={videoPaused}
+                    muted={false}
+                    repeat={false}
+                    controls={false}
+                    playInBackground={false}
+                    playWhenInactive={false}
+                    ignoreSilentSwitch="ignore"
+                    onLoad={(data) => {
+                      console.log('Modal video loaded, duration:', data.duration);
+                      setVideoDuration(data.duration);
+                    }}
+                    onProgress={(data) => {
+                      setVideoProgress(data.currentTime);
+                    }}
+                    onError={(error) => {
+                      console.log('Modal video error:', error);
+                      Alert.alert('Video Error', 'Failed to load video. Please try again.');
+                    }}
+                  />
+                  {videoPaused && (
+                    <TouchableOpacity 
+                      style={styles.modalPlayButtonOverlay}
+                      onPress={() => setVideoPaused(false)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.modalPlayButton}>
+                        <Icon 
+                          name="play" 
+                          size={32} 
+                          color="#990906" 
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  {!videoPaused && (
+                    <TouchableOpacity 
+                      style={styles.modalPlayButtonOverlay}
+                      onPress={() => setVideoPaused(true)}
+                      activeOpacity={1}
+                    />
+                  )}
+                  {/* Video Progress Bar */}
+                  <View style={styles.videoProgressContainer}>
+                    <View 
+                      style={[
+                        styles.videoProgressBar, 
+                        { width: videoDuration > 0 ? `${(videoProgress / videoDuration) * 100}%` : '0%' }
+                      ]} 
+                    />
+                  </View>
+                </View>
+              ) : selectedMedia ? (
+                <Image
+                  source={{ uri: selectedMedia.media_url }}
+                  style={styles.modalImage}
+                  resizeMode="contain"
+                />
+              ) : null}
             </View>
           </View>
-        )}
+        </Modal>
 
         {/* Location Selection Modal */}
         <Modal
@@ -1079,21 +1147,31 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -12 }, { translateY: -12 }],
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 24,
-    width: 48,
-    height: 48,
+    transform: [{ translateX: -16 }, { translateY: -16 }],
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 32,
+    width: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: '#990906',
   },
   sideMediaContainer: {
     flex: 1,
-    justifyContent: 'space-between',
+    paddingLeft: 2,
+    gap: 4,
   },
   sideMediaItem: {
     flex: 1,
-    marginBottom: 2,
     position: 'relative',
   },
   sideMedia: {
@@ -1104,13 +1182,23 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -8 }, { translateY: -8 }],
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 16,
-    width: 32,
-    height: 32,
+    transform: [{ translateX: -12 }, { translateY: -12 }],
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#990906',
   },
   moreMediaOverlay: {
     position: 'absolute',
@@ -1127,34 +1215,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  // Modal Styles
-  modalOverlay: {
+  // Media Modal Styles
+  mediaModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 80,
+  },
+  mediaModalBackdrop: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
   },
-  modalContent: {
-    width: '90%',
-    height: '80%',
+  mediaModalContent: {
+    width: width - 24,
+    height: 280,
     backgroundColor: '#000',
     borderRadius: 12,
+    overflow: 'hidden',
     position: 'relative',
   },
   closeButton: {
     position: 'absolute',
-    top: 20,
-    right: 20,
+    top: 8,
+    right: 8,
     zIndex: 1001,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    borderRadius: 16,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1162,9 +1255,54 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  modalVideoContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
   modalVideo: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#000',
+  },
+  modalPlayButtonOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalPlayButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 40,
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+    borderWidth: 4,
+    borderColor: '#990906',
+  },
+  videoProgressContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  videoProgressBar: {
+    height: '100%',
+    backgroundColor: '#f9ca1b',
   },
   
   // Location Modal Styles

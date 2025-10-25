@@ -187,8 +187,6 @@ const ImageCarousel = ({ images }: { images: { uri: string }[] }) => {
 };
 
 const ProductCard = ({ product, onPress }: ProductCardProps) => {
-  console.log('🎨 Rendering ProductCard with product:', JSON.stringify(product, null, 2));
-  
   const handleAddToCart = async (e: any) => {
     e.stopPropagation();
     
@@ -275,21 +273,15 @@ const MarketplaceScreen = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('🛒 Redux cart state:', JSON.stringify(cartItems, null, 2));
-
   useEffect(() => {
     const fetchSupplements = async () => {
       try {
-        console.log('🔍 Starting fetchSupplements...');
         setError(null);
         const data = await apiService.getSupplements();
-        console.log('📦 Raw API data received:', JSON.stringify(data, null, 2));
         
         if (data.success && data.data && data.data.length > 0) {
-          console.log('✅ API returned success with data, length:', data.data.length);
           // Transform the data to ensure it has the required structure
           const transformedProducts = data.data.map((product: any, index: number) => {
-            console.log(`🔄 Transforming product ${index}:`, JSON.stringify(product, null, 2));
             const transformed = {
               ...product,
               id: product.id || product.supplement_id || Math.random().toString(),
@@ -314,27 +306,21 @@ const MarketplaceScreen = () => {
               net_weight: String(product.net_weight || ''),
               status: String(product.status || 'active')
             };
-            console.log(`✅ Transformed product ${index}:`, JSON.stringify(transformed, null, 2));
             return transformed;
           });
           
-          console.log('🎯 Setting transformed products, count:', transformedProducts.length);
           setAllProducts(transformedProducts);
           setDisplayedProducts(transformedProducts.slice(0, productsPerPage));
-          console.log('✅ Products set successfully');
         } else {
-          console.warn('⚠️ No supplement data received or API returned failure');
           // Use fallback data instead of empty array
           const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
-          console.log('🔄 Using fallback products, count:', fallbackProducts.length);
           setAllProducts(fallbackProducts);
           setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
         }
       } catch (error) {
-        console.error('❌ Error fetching supplements:', error);
+        console.error('Error fetching supplements:', error);
         // Use fallback data on error instead of empty array
         const fallbackProducts = [...POPULAR_PRODUCTS, ...RECOMMENDED_PRODUCTS];
-        console.log('🔄 Using fallback products due to error, count:', fallbackProducts.length);
         setAllProducts(fallbackProducts);
         setDisplayedProducts(fallbackProducts.slice(0, productsPerPage));
         
@@ -343,12 +329,10 @@ const MarketplaceScreen = () => {
           setError('Data loading failed');
         }
       } finally {
-        console.log('🏁 Setting initialLoading to false');
         setInitialLoading(false);
       }
     };
 
-    console.log('🚀 Calling fetchSupplements...');
     fetchSupplements();
   }, []);
 
@@ -387,9 +371,7 @@ const MarketplaceScreen = () => {
 
   // Cart Icon component - FIXED
   const CartIcon = () => {
-    console.log('🛒 Rendering CartIcon, cartItems:', JSON.stringify(cartItems, null, 2));
     const itemCount = cartItems?.reduce((sum, item) => sum + (Number(item?.quantity) || 1), 0) || 0;
-    console.log('🛒 Calculated itemCount:', itemCount);
     return (
       <TouchableOpacity
         style={{ marginLeft: 16 }}
@@ -417,9 +399,6 @@ const MarketplaceScreen = () => {
     );
   };
 
-  console.log('🏠 Rendering MarketplaceScreen, displayedProducts count:', displayedProducts.length);
-  console.log('🏠 initialLoading:', initialLoading);
-  console.log('🏠 error:', error);
 
   return (
     <View style={styles.container}>
@@ -560,19 +539,13 @@ const MarketplaceScreen = () => {
           </View>
         ) : displayedProducts.length > 0 ? (
           <View style={styles.productsGrid}>
-            {(() => {
-              console.log('📦 About to map displayedProducts, count:', displayedProducts.length);
-              return displayedProducts.map((product, index) => {
-                console.log(`📦 Mapping product ${index}:`, JSON.stringify(product, null, 2));
-                return (
-                  <ProductCard 
-                    key={product.id}
-                    product={product}
-                    onPress={() => handleProductPress(product)}
-                  />
-                );
-              });
-            })()}
+            {displayedProducts.map((product, index) => (
+              <ProductCard 
+                key={product.id}
+                product={product}
+                onPress={() => handleProductPress(product)}
+              />
+            ))}
           </View>
         ) : (
           <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 20 }}>

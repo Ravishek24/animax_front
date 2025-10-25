@@ -167,6 +167,14 @@ class ApiService {
     });
   }
 
+  // PATCH request
+  async patch<T = any>(endpoint: string, data: any = {}): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Auth specific methods
   async sendOTP(phoneNumber: string): Promise<ApiResponse> {
     return this.post<ApiResponse>(API_ENDPOINTS.AUTH.SEND_OTP, { phoneNumber });
@@ -203,6 +211,10 @@ class ApiService {
 
   async getAnimalDetails(id: string): Promise<ApiResponse> {
     return this.get<ApiResponse>(API_ENDPOINTS.ANIMALS.DETAILS.replace(':id', id));
+  }
+
+  async updateAnimalStatus(id: number, status: 'active' | 'inactive' | 'sold'): Promise<ApiResponse> {
+    return this.patch<ApiResponse>(`${API_ENDPOINTS.ANIMALS.LIST}/${id}/status`, { status });
   }
 
   // Orders specific methods

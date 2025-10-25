@@ -372,12 +372,32 @@ const AnimalSellScreen = () => {
         } as any);
       }
 
-      // Upload with generous timeout for any size file
+      // Calculate total FormData size
+      const formDataSize = await new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.sociamosaic.com/api/animals');
+        xhr.send(formData);
+        xhr.onload = () => resolve(xhr.getResponseHeader('content-length') || 'unknown');
+      });
+      
       console.log('🌐 Uploading optimized media...');
+      console.log('📊 FormData size estimate:', formDataSize);
+      
+      // Log individual file sizes
+      if (generalVideo) {
+        console.log('📹 General video size:', (generalVideo.fileSize! / 1024 / 1024).toFixed(2), 'MB');
+      }
+      if (udderPhoto) {
+        console.log('📸 Udder photo size:', (udderPhoto.fileSize! / 1024 / 1024).toFixed(2), 'MB');
+      }
+      if (milkingVideo) {
+        console.log('🎬 Milking video size:', (milkingVideo.fileSize! / 1024 / 1024).toFixed(2), 'MB');
+      }
       
       // Create AbortController for timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
+        console.log('⏰ Request timeout after 10 minutes');
         controller.abort();
       }, 600000); // 10 minutes timeout
       
@@ -396,9 +416,23 @@ const AnimalSellScreen = () => {
 
       console.log('📡 Response status:', response.status);
       console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📡 Response status text:', response.statusText);
+      console.log('📡 Response URL:', response.url);
+      console.log('📡 Response type:', response.type);
 
-      const result = await response.json();
-      console.log('📄 Response data:', JSON.stringify(result, null, 2));
+      // Log response body before parsing
+      const responseText = await response.text();
+      console.log('📄 Raw response body:', responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''));
+      
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log('📄 Parsed response data:', JSON.stringify(result, null, 2));
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        console.error('❌ Response was not valid JSON');
+        throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`);
+      }
 
       if (response.ok && result.success) {
         console.log('✅ Animal submission successful!');
@@ -433,12 +467,25 @@ const AnimalSellScreen = () => {
       }
     } catch (error: any) {
       console.error('💥 Submission error:', error);
+      console.error('💥 Error name:', error.name);
+      console.error('💥 Error message:', error.message);
+      console.error('💥 Error stack:', error.stack);
+      
+      let errorMessage = 'Failed to submit listing. Please try again.';
       
       if (error.name === 'AbortError') {
-        Alert.alert('Timeout Error', 'Upload is taking too long. Please check your connection and try again.');
-      } else {
-        Alert.alert('Error', 'Failed to submit listing. Please try again.');
+        errorMessage = 'Upload is taking too long. Please check your connection and try again.';
+      } else if (error.message.includes('413')) {
+        errorMessage = 'Files are too large. Please compress your videos or use smaller files.';
+      } else if (error.message.includes('Network')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Upload timed out. Please try again.';
+      } else if (error.message.includes('JSON Parse error')) {
+        errorMessage = 'Server returned invalid response. This might be a server configuration issue.';
       }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
