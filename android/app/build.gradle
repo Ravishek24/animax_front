@@ -116,10 +116,10 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            signingConfig signingConfigs.release
-            shrinkResources true
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            signingConfig signingConfigs.debug  // Use debug keystore for testing
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             crunchPngs true
         }
     }
