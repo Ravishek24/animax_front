@@ -1,7 +1,7 @@
 export default {
   expo: {
-    name: "Animal Marketplace",
-    slug: "animal-marketplace",
+    name: "Pashupalak",
+    slug: "Pashupalak",
     scheme: "animalmarketplace", // Unique scheme to avoid conflicts
     version: "1.0.0",
     orientation: "portrait",

@@ -11,14 +11,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
-  Modal
+  Modal,
+  StatusBar,
+  I18nManager
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import { googlePlacesService } from '../services/googlePlacesService';
 import { apiService } from '../services';
+
+// Force LTR layout
+I18nManager.allowRTL(false);
+I18nManager.forceRTL(false);
 
 const RegisterScreen = () => {
   const router = useRouter();
@@ -214,18 +221,20 @@ const RegisterScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets={true}
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        enabled={Platform.OS === 'ios'}
       >
-        <View style={styles.header}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
           <Icon name="account-plus" size={64} color="#990906" style={{ marginBottom: 12 }} />
           <Text style={styles.title}>प्रोफाइल पूरा करें</Text>
           <Text style={styles.subtitle}>
@@ -279,8 +288,11 @@ const RegisterScreen = () => {
                 placeholder="अपना पूरा पता दर्ज करें"
                 placeholderTextColor="#bbb"
                 multiline={false}
+                textAlign="left"
                 textAlignVertical="center"
                 editable={true}
+                autoCorrect={false}
+                selectTextOnFocus={false}
               />
               {loadingSuggestions && (
                 <Text style={styles.loadingText}>सुझाव खोज रहे हैं...</Text>
@@ -308,8 +320,11 @@ const RegisterScreen = () => {
                 placeholder="अपना पूरा पता दर्ज करें"
                 placeholderTextColor="#bbb"
                 multiline={false}
+                textAlign="left"
                 textAlignVertical="center"
                 editable={true}
+                autoCorrect={false}
+                selectTextOnFocus={false}
               />
               <Text style={styles.infoText}>
                 💡 पता टाइप करें और शहर, राज्य, पिन कोड स्वतः भर जाएगा
@@ -323,8 +338,11 @@ const RegisterScreen = () => {
               placeholder="अपना पूरा पता दर्ज करें"
               placeholderTextColor="#bbb"
               multiline={false}
+              textAlign="left"
               textAlignVertical="center"
               editable={true}
+              autoCorrect={false}
+              selectTextOnFocus={false}
             />
           )}
 
@@ -374,41 +392,46 @@ const RegisterScreen = () => {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleBackToLogin} style={styles.backButton}>
-            <Text style={styles.backText}>वापस लॉगिन पर जाएं</Text>
-          </TouchableOpacity>
-          </View>
-        </TouchableWithoutFeedback>
-
-        {/* Error Modal */}
-        <Modal
-          visible={!!error}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setError('')}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.errorModal}>
-              <View style={styles.errorIconContainer}>
-                <Icon name="alert-circle" size={48} color="#ff4444" />
-              </View>
-              <Text style={styles.errorModalTitle}>Error</Text>
-              <Text style={styles.errorModalText}>{error}</Text>
-              <TouchableOpacity
-                style={styles.errorModalButton}
-                onPress={() => setError('')}
-              >
-                <Text style={styles.errorModalButtonText}>OK</Text>
-              </TouchableOpacity>
+            <TouchableOpacity onPress={handleBackToLogin} style={styles.backButton}>
+              <Text style={styles.backText}>वापस लॉगिन पर जाएं</Text>
+            </TouchableOpacity>
             </View>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Error Modal */}
+      <Modal
+        visible={!!error}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setError('')}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.errorModal}>
+            <View style={styles.errorIconContainer}>
+              <Icon name="alert-circle" size={48} color="#ff4444" />
+            </View>
+            <Text style={styles.errorModalTitle}>Error</Text>
+            <Text style={styles.errorModalText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.errorModalButton}
+              onPress={() => setError('')}
+            >
+              <Text style={styles.errorModalButtonText}>OK</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -419,7 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 20,
-    paddingBottom: 100, // Extra padding for keyboard
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
@@ -468,17 +491,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     marginBottom: 12,
     minHeight: 50,
+    textAlign: 'left',
+    writingDirection: 'ltr',
   },
   addressInput: {
-    minHeight: 50, // Same height as other input fields
-    height: 50, // Fixed height to match other fields
-    width: '100%', // Ensure full width like other fields
-    paddingTop: 0, // Remove extra top padding
-    paddingBottom: 0, // Remove extra bottom padding
-    justifyContent: 'center', // Center content vertically
+    minHeight: 50,
+    height: 50,
+    width: '100%',
+    paddingTop: 0,
+    paddingBottom: 0,
+    justifyContent: 'center',
+    direction: 'ltr',
   },
   addressContainer: {
-    width: '100%', // Ensure container takes full width
+    width: '100%',
+    position: 'relative',
+    zIndex: 100,
+    marginBottom: 12,
   },
   addressDetails: {
     width: '100%',
@@ -530,19 +559,21 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   suggestionsContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#eee',
-    borderTopWidth: 0,
+    borderColor: '#ddd',
     borderRadius: 8,
-    marginTop: -8,
-    maxHeight: 150, // Reduced height to prevent going off-screen
-    elevation: 3,
+    maxHeight: 150,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    zIndex: 1000, // Ensure it appears above other elements
+    zIndex: 9999,
   },
   suggestionItem: {
     padding: 13,

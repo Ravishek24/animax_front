@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account - Pashupalak</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4CAF50;
+            margin-top: 30px;
+        }
+        .contact-info {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+            margin: 20px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .steps {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .steps li {
+            margin-bottom: 10px;
+        }
+        .email-link {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .email-link:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Account Deletion Request</h1>
+        
+        <p>We understand that you may want to delete your account from Pashupalak. This page provides you with clear instructions on how to request account deletion.</p>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> Account deletion is permanent and cannot be undone. All your data, including your profile, listings, orders, and transaction history will be permanently removed from our system.
+        </div>
+        
+        <h2>How to Request Account Deletion</h2>
+        
+        <div class="steps">
+            <h3>Step-by-Step Process:</h3>
+            <ol>
+                <li><strong>Send an Email:</strong> Contact us at the email address below</li>
+                <li><strong>Include Required Information:</strong> Provide your registered phone number and email address</li>
+                <li><strong>Verification:</strong> We will verify your identity before processing the deletion</li>
+                <li><strong>Confirmation:</strong> You will receive a confirmation email once your account is deleted</li>
+            </ol>
+        </div>
+        
+        <h2>Contact Information</h2>
+        
+        <div class="contact-info">
+            <h3>Account Deletion Request</h3>
+            <p><strong>Email:</strong> <a href="mailto:ravishek@gmail.com?subject=Account%20Deletion%20Request" class="email-link">ravishek@gmail.com</a></p>
+            <p><strong>Subject Line:</strong> Account Deletion Request</p>
+            <p><strong>Response Time:</strong> Within 7 business days</p>
+        </div>
+        
+        <h2>Required Information</h2>
+        <p>Please include the following information in your deletion request:</p>
+        <ul>
+            <li>Your registered phone number</li>
+            <li>Your registered email address</li>
+            <li>Reason for account deletion (optional)</li>
+            <li>Confirmation that you understand the deletion is permanent</li>
+        </ul>
+        
+        <h2>What Happens After Deletion</h2>
+        <p>Once your account is deleted:</p>
+        <ul>
+            <li>All your personal information will be permanently removed</li>
+            <li>Your animal listings will be removed from the marketplace</li>
+            <li>Your order history and transaction records will be deleted</li>
+            <li>You will no longer be able to access your account</li>
+            <li>You can create a new account in the future if needed</li>
+        </ul>
+        
+        <h2>Data Retention</h2>
+        <p>We may retain certain information for legal or regulatory purposes, such as:</p>
+        <ul>
+            <li>Transaction records required for tax purposes</li>
+            <li>Information required for legal compliance</li>
+            <li>Anonymized data for analytics and service improvement</li>
+        </ul>
+        
+        <h2>Alternative Options</h2>
+        <p>Before deleting your account, consider these alternatives:</p>
+        <ul>
+            <li><strong>Deactivate Account:</strong> Temporarily disable your account instead of permanent deletion</li>
+            <li><strong>Remove Listings:</strong> Delete specific animal listings while keeping your account</li>
+            <li><strong>Update Information:</strong> Modify your profile information instead of deletion</li>
+        </ul>
+        
+        <div class="footer">
+            <p>Last updated: <span id="currentDate"></span></p>
+            <p>For any questions about account deletion, please contact us at <a href="mailto:ravishek@gmail.com" class="email-link">ravishek@gmail.com</a></p>
+        </div>
+    </div>
+    
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+    </script>
+</body>
+</html>
